@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es" id="html-theme">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Pequeño Tesoro - Inicio</title> <meta name="theme-color" content="#FFB6C1">
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Comic+Neue:wght@400;700&family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <style>
+        /* Estilos adicionales para el selector de diario (muy básico por ahora) */
+        .diario-activo-info {
+            text-align: center;
+            margin-bottom: 15px;
+            padding: 8px;
+            background-color: var(--color-secundario);
+            color: var(--color-texto);
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+        .diario-activo-info strong {
+            color: var(--color-primario);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 id="nombre-app-titulo">✨ Mi Pequeño Tesoro</h1>
+            <button id="btn-logout" title="Cerrar Sesión">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-log-out"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            </button>
+        </header>
+
+        <nav>
+            <a href="index.html" class="active">Inicio</a>
+            <a href="fotos.html">Fotos</a>
+            <a href="calendario.html">Calendario</a>
+            <a href="linea-tiempo.html">Línea de Tiempo</a>
+            <a href="configuracion.html">Configuración</a>
+        </nav>
+
+        <main id="main-content">
+            <div id="global-index-message" class="alert" style="display:none;"></div>
+            
+            <section class="home-widgets">
+                <div class="widget" id="widget-diario-activo" style="display: none;">
+                    <h2>Diario Activo</h2>
+                    <div class="diario-activo-info">
+                        <strong><span id="nombre-diario-actual"></span></strong>
+                        <p id="info-bebe"></p>
+                    </div>
+                </div>
+
+                <div class="widget" id="ultimos-recuerdos">
+                    <h2>Últimos Recuerdos</h2>
+                    <div id="ultima-multimedia-lista">Cargando...</div>
+                </div>
+                
+                <div class="widget" id="proximos-hitos">
+                    <h2>Próximos Hitos</h2>
+                    <div id="ultimos-hitos-lista">Cargando...</div>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>&copy; <span id="current-year"></span> Mi Pequeño Tesoro</p>
+        </footer>
+    </div>
+    
+    <script type="module" src="/js/utils.js"></script>
+    <script type="module" src="/js/theme-manager.js"></script>
+    <script type="module">
+        import { fetchAPI, cerrarSesion, setTituloDiario, setNombreDiarioUI, mostrarMensajeGlobal } from '/js/utils.js';
+        import { cargarYAplicarTema } from '/js/theme-manager.js';
+
+        const elementosComunes = {
+            diarioActivoInfoEl: document.querySelector('.diario-activo-info'),
+            nombreDiarioActualEl: document.getElementById('nombre-diario-actual'),
+            infoBebeEl: document.getElementById('info-bebe'),
+            globalIndexMessageEl: document.getElementById('global-index-message'),
+            nombreAppTituloEl: document.getElementById('nombre-app-titulo'),
+            btnLogoutEl: document.getElementById('btn-logout'),
+        };
+
+        let diarioIdActivoGlobal = null;
+
+        async function cargarWidgets(diarioId) {
+            try {
+                // Lógica de carga de widgets
+                const config = await fetchAPI(`/api/diarios/${diarioId}/config`);
+                setNombreDiarioUI(config.nombre_diario_personalizado);
+                setTituloDiario(config.nombre_diario_personalizado);
+                elementosComunes.infoBebeEl.textContent = `Bebé: ${config.nombre_bebe}, Fecha de Nacimiento: ${config.fecha_nacimiento}`;
+                document.getElementById('widget-diario-activo').style.display = 'block';
+
+                const ultimosRecuerdos = await fetchAPI(`/api/diarios/${diarioId}/recuerdos/ultimos`);
+                // Lógica para renderizar los recuerdos
+                console.log(ultimosRecuerdos);
+                
+            } catch (error) {
+                console.error('Error al cargar widgets:', error);
+                mostrarMensajeGlobal('Error al cargar la información del diario.', 'error', elementosComunes.globalIndexMessageEl);
+            }
+        }
+        
+        async function verificarSesionYAdaptarUI() {
+            try {
+                const session = await fetchAPI('/api/session-check');
+                if (!session || !session.user) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                if (session.user.active_diario_id) {
+                    diarioIdActivoGlobal = session.user.active_diario_id;
+                    await cargarWidgets(diarioIdActivoGlobal);
+                    await cargarYAplicarTema(diarioIdActivoGlobal);
+                } else {
+                    mostrarMensajeGlobal('No tienes un diario activo. Por favor, ve a configuración para crear uno.', 'info', elementosComunes.globalIndexMessageEl);
+                }
+            } catch (error) {
+                console.error('Error al verificar sesión:', error);
+                window.location.href = 'login.html';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+            await verificarSesionYAdaptarUI();
+            if (elementosComunes.btnLogoutEl) {
+                elementosComunes.btnLogoutEl.addEventListener('click', cerrarSesion);
+            }
+
+            window.addEventListener('activeDiarioChanged', async (event) => {
+                console.log('Diario activo cambiado a:', event.detail.diarioId);
+                mostrarMensajeGlobal('Cargando datos del nuevo diario...', 'carga', elementosComunes.globalIndexMessageEl);
+                diarioIdActivoGlobal = event.detail.diarioId;
+                await cargarWidgets(diarioIdActivoGlobal);
+                await cargarYAplicarTema(diarioIdActivoGlobal);
+                mostrarMensajeGlobal('', '', elementosComunes.globalIndexMessageEl);
+            });
+        });
+    </script>
+</body>
+</html>

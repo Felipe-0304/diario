@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Pequeño Tesoro - Iniciar Sesión</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css"> <style>
+        :root {
+            /* Estos valores son placeholders, theme-manager.js los actualizará */
+            --color-primario: #FFB6C1; /* Cambiado de --primary-color */
+            --color-secundario: #FFD1DC; /* Cambiado de --secondary-color */
+            --color-accento: #FFD700;
+            --color-texto: #5D3B45;
+            --color-texto-claro: #A78B94;
+            --color-fondo: #FFF9FB;
+            --color-tarjetas: #FFFFFF;
+            --color-bordes: #F0D6DE; /* Cambiado de --color-borde */
+            --color-error: #D8000C; 
+            --color-exito: #2E8B57; 
+            --fuente-principal: 'Comic Neue', cursive; /* Añadido para consistencia */
+        }
+
+        body {
+            font-family: var(--fuente-principal); /* Usar variable global */
+            background-color: var(--color-fondo);
+            color: var(--color-texto);
+            margin: 0;
+            padding: 20px; 
+            display: flex;
+            flex-direction: column; 
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .login-container {
+            background-color: var(--color-tarjetas);
+            border-radius: 20px;
+            padding: 30px 40px; 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1); 
+            width: 100%;
+            max-width: 420px; 
+            text-align: center;
+            border: 1px solid var(--color-bordes);
+        }
+
+        h1 {
+            font-family: 'Pacifico', cursive;
+            color: var(--color-primario);
+            font-size: 2.8rem; 
+            margin-bottom: 25px;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--color-bordes);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px 10px; 
+            text-align: center;
+            cursor: pointer;
+            color: var(--color-texto-claro);
+            font-weight: bold;
+            border-bottom: 3px solid transparent; 
+            transition: color 0.3s, border-color 0.3s;
+            margin-bottom: -1px; 
+        }
+        .tab:hover { color: var(--color-primario); }
+        .tab.active { color: var(--color-primario); border-bottom-color: var(--color-primario); }
+
+        .form-group { margin-bottom: 20px; text-align: left; }
+        label {
+            display: block; margin-bottom: 8px; font-weight: bold;
+            color: var(--color-texto); font-size: 0.95rem;
+        }
+        input[type="email"], input[type="password"], input[type="text"] {
+            width: 100%; padding: 12px 15px; 
+            border: 1px solid var(--color-bordes); border-radius: 10px;
+            font-family: var(--fuente-principal); font-size: 1rem;
+            box-sizing: border-box; 
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focus {
+            outline: none; border-color: var(--color-primario);
+            box-shadow: 0 0 0 2px var(--color-secundario);
+        }
+        .form-group small {
+            font-size: 0.8rem; color: var(--color-texto-claro);
+            margin-top: 4px; display: block;
+        }
+
+        button[type="submit"] { 
+            width: 100%; padding: 14px; border: none;
+            border-radius: 10px; background-color: var(--color-primario);
+            color: white; font-family: var(--fuente-principal);
+            font-weight: bold; font-size: 1.1rem; cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            margin-top: 10px;
+        }
+        button[type="submit"]:hover {
+            background-color: var(--color-secundario); 
+            color: var(--color-texto); 
+            transform: translateY(-2px);
+        }
+        button[type="submit"]:active { transform: translateY(0); }
+
+        .tab-content { display: none; animation: fadeInContent 0.5s ease forwards; }
+        .tab-content.active { display: block; }
+        @keyframes fadeInContent {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* .message y sus variantes ahora vienen de main.css */
+        footer { margin-top: 30px; color: var(--color-texto-claro); font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>Mi Pequeño Tesoro</h1>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="login">Iniciar Sesión</div>
+            <div class="tab" data-tab="register">Registrarse</div>
+        </div>
+        
+        <form id="login-form" class="tab-content active" novalidate>
+            <div class="form-group">
+                <label for="login-email">Correo Electrónico:</label>
+                <input type="email" id="login-email" name="email" required autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label for="login-password">Contraseña:</label>
+                <input type="password" id="login-password" name="password" required autocomplete="current-password">
+            </div>
+            <div id="login-message" class="mensaje" style="display: none;"></div>
+            <button type="submit" id="btn-login">Ingresar</button>
+        </form>
+        
+        <form id="register-form" class="tab-content" novalidate>
+            <div class="form-group">
+                <label for="register-name">Nombre:</label>
+                <input type="text" id="register-name" name="name" required autocomplete="name">
+            </div>
+            <div class="form-group">
+                <label for="register-email">Correo Electrónico:</label>
+                <input type="email" id="register-email" name="email" required autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label for="register-password">Contraseña:</label>
+                <input type="password" id="register-password" name="password" required minlength="8" autocomplete="new-password">
+                <small>Mínimo 8 caracteres.</small>
+            </div>
+            <div class="form-group">
+                <label for="register-confirm">Confirmar Contraseña:</label>
+                <input type="password" id="register-confirm" name="confirmPassword" required minlength="8" autocomplete="new-password">
+            </div>
+            <div id="register-message" class="mensaje" style="display: none;"></div>
+            <button type="submit" id="btn-register">Registrarse</button>
+        </form>
+    </div>
+
+    <footer>
+        <p>&copy; <span id="current-year"></span> Mi Pequeño Tesoro. Todos los derechos reservados.</p>
+    </footer>
+
+    <script src="/js/theme-manager.js" defer></script>
+    <script src="/js/utils.js" defer></script> <script>
+        // mostrarMensajeGlobal y actualizarAnioFooter vienen de utils.js
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+            const loginMessageElement = document.getElementById('login-message');
+            const registerMessageElement = document.getElementById('register-message');
+
+            const tabs = document.querySelectorAll('.tabs .tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                    document.getElementById(this.dataset.tab + '-form').classList.add('active');
+                    // Usar mostrarMensajeGlobal para ocultar, pasando el elemento directamente
+                    mostrarMensajeGlobal('', '', loginMessageElement);
+                    mostrarMensajeGlobal('', '', registerMessageElement);
+                });
+            });
+            
+            // Esta función showMessage local es específica para login/registro y puede mantenerse si se prefiere
+            // o adaptarse para usar mostrarMensajeGlobal. Aquí la mantendré por simplicidad del cambio.
+            function showMessageLocal(element, message, isError = true) {
+                element.textContent = message;
+                element.className = isError ? 'mensaje mensaje-error' : 'mensaje mensaje-exito'; // Usa clases globales
+                element.style.display = 'block';
+            }
+
+            loginForm.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                showMessageLocal(loginMessageElement, '', false); // Limpiar mensaje
+
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                
+                if (!email || !password) {
+                    showMessageLocal(loginMessageElement, 'Por favor, completa todos los campos.'); return;
+                }
+
+                try {
+                    // fetchAPI es global ahora
+                    const data = await fetchAPI('/api/login', 'POST', { email, password });
+                    // No es necesario parsear data como JSON, fetchAPI ya lo hace
+                    window.location.href = 'index.html';
+                } catch (error) {
+                    showMessageLocal(loginMessageElement, error.message || 'Error al iniciar sesión.');
+                }
+            });
+            
+            registerForm.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                showMessageLocal(registerMessageElement, '', false); // Limpiar mensaje
+
+                const name = document.getElementById('register-name').value;
+                const email = document.getElementById('register-email').value;
+                const password = document.getElementById('register-password').value;
+                const confirmPassword = document.getElementById('register-confirm').value;
+                
+                if (!name || !email || !password || !confirmPassword) {
+                    showMessageLocal(registerMessageElement, 'Por favor, completa todos los campos.'); return;
+                }
+                if (password.length < 8) {
+                    showMessageLocal(registerMessageElement, 'La contraseña debe tener al menos 8 caracteres.'); return;
+                }
+                if (password !== confirmPassword) {
+                    showMessageLocal(registerMessageElement, 'Las contraseñas no coinciden.'); return;
+                }
+                
+                try {
+                    // fetchAPI es global
+                    const data = await fetchAPI('/api/registro', 'POST', { nombre: name, email, password });
+                    showMessageLocal(registerMessageElement, '¡Registro exitoso! Serás redirigido...', false);
+                    setTimeout(() => { window.location.href = 'index.html'; }, 2000);
+                } catch (error) {
+                    showMessageLocal(registerMessageElement, error.message || 'Error al registrarse.');
+                }
+            });
+            
+            // actualizarAnioFooter() se llama desde utils.js
+        });
+    </script>
+</body>
+</html>

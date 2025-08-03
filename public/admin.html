@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="es" id="html-theme">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Mi Pequeño Tesoro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Comic+Neue:wght@400;700&family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <style>
+        body {
+            font-family: var(--fuente-principal, 'Comic Neue', cursive);
+            background-color: var(--color-fondo, #FFF9FB);
+            color: var(--color-texto, #5D3B45);
+        }
+        .admin-container {
+            display: flex;
+            min-height: calc(100vh - 180px); 
+            margin-top: 20px; 
+        }
+        .admin-sidebar {
+            width: 250px;
+            background-color: var(--color-tarjetas, #FFFFFF);
+            padding: 20px;
+            border-right: 1px solid var(--color-bordes, #F0D6DE);
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+        }
+        .admin-sidebar h2 {
+            font-family: 'Pacifico', cursive;
+            color: var(--color-primario, #FFB6C1);
+            font-size: 1.8rem;
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 25px;
+        }
+        .admin-sidebar ul { list-style: none; padding: 0; margin: 0; }
+        .admin-sidebar li a {
+            display: block; padding: 12px 15px; text-decoration: none;
+            color: var(--color-texto, #5D3B45); border-radius: 8px;
+            margin-bottom: 8px; font-weight: bold;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .admin-sidebar li a:hover {
+            background-color: var(--color-secundario, #FFD1DC);
+            color: var(--color-primario, #FFB6C1);
+        }
+        .admin-sidebar li a.active {
+            background-color: var(--color-primario, #FFB6C1);
+            color: white;
+        }
+        .admin-content {
+            flex-grow: 1; padding: 25px;
+            background-color: var(--color-fondo, #FFF9FB);
+        }
+        .admin-section { display: none; animation: fadeInContent 0.5s ease forwards; }
+        .admin-section.active { display: block; }
+        @keyframes fadeInContent {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .admin-content h3 {
+            font-family: 'Pacifico', cursive; color: var(--color-primario, #FFB6C1);
+            font-size: 2rem; margin-top: 0; margin-bottom: 20px;
+            border-bottom: 2px dashed var(--color-bordes, #F0D6DE); padding-bottom: 10px;
+        }
+        .user-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .user-table th, .user-table td {
+            border: 1px solid var(--color-bordes, #F0D6DE); padding: 10px 12px;
+            text-align: left; vertical-align: middle;
+        }
+        .user-table th {
+            background-color: var(--color-secundario, #FFD1DC);
+            color: var(--color-texto, #5D3B45); font-weight: bold;
+        }
+        .user-table tr:nth-child(even) { background-color: #fdf5f7; }
+        .user-table tr:hover { background-color: #ffeaf2; }
+        .user-actions button {
+            margin-right: 5px; padding: 6px 10px; font-size: 0.85rem;
+            border-radius: 5px; cursor: pointer; border: none;
+        }
+        .search-bar-admin { margin-bottom: 20px; display: flex; gap: 10px; align-items: center; }
+        .search-bar-admin input[type="search"] { flex-grow: 1; }
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            z-index: 1050;
+            align-items: center; justify-content: center; padding: 15px; box-sizing: border-box;
+        }
+        .modal-contenido {
+            background-color: var(--color-tarjetas, #FFFFFF); padding: 30px; border-radius: 15px;
+            width: 90%; max-width: 500px; box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border: 1px solid var(--color-bordes, #F0D6DE); max-height: 90vh; overflow-y: auto;
+            animation: modalFadeIn 0.3s ease-out;
+        }
+        .modal-contenido h2 {
+            font-family: 'Pacifico', cursive; color: var(--color-primario, #FFB6C1);
+            margin-top: 0; margin-bottom: 25px; text-align: center; font-size: 1.8rem;
+        }
+        .stats-grid-admin {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+        .stat-card-admin {
+            background-color: var(--color-tarjetas, #FFFFFF); padding: 20px;
+            border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            text-align: center; border: 1px solid var(--color-bordes, #F0D6DE);
+        }
+        .stat-card-admin h4 { margin-top: 0; margin-bottom: 10px; font-size: 1.1rem; color: var(--color-primario, #FFB6C1); }
+        .stat-value-admin { font-size: 2rem; font-weight: bold; color: var(--color-texto, #5D3B45); margin: 0; }
+        
+        .admin-diario-selector-group { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; flex-wrap: wrap;}
+        .admin-diario-selector-group label { font-weight: bold; font-size: 1.1rem; }
+        #admin-diario-select { flex-grow: 1; }
+        .shared-users-list-admin { list-style: none; padding: 0; }
+        .shared-users-list-admin li { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--color-bordes); }
+        .shared-users-list-admin .user-info { flex-grow: 1; }
+        .shared-users-list-admin .user-info strong { color: var(--color-texto); }
+        .shared-users-list-admin .user-info small { color: var(--color-texto-claro); display: block; font-size: 0.85em; }
+        .shared-users-list-admin .user-role { margin-right: 15px; font-style: italic; color: var(--color-primario); }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 id="nombre-app-titulo-admin">Panel de Administración</h1>
+            <button id="btn-logout" title="Cerrar sesión">👋</button>
+            <nav>
+                <ul>
+                    <li><a href="index.html">🏠 Inicio App</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <div class="admin-container">
+            <aside class="admin-sidebar">
+                <h2>Menú Admin</h2>
+                <ul>
+                    <li><a href="#dashboard" class="admin-nav-link active" data-section="dashboard-section">📊 Dashboard</a></li>
+                    <li><a href="#user-management" class="admin-nav-link" data-section="user-management-section">👥 Gestión de Usuarios</a></li>
+                    <li><a href="#diary-management" class="admin-nav-link" data-section="diary-management-section">📚 Gestión de Diarios</a></li>
+                    <li><a href="#site-settings" class="admin-nav-link" data-section="site-settings-section">⚙️ Config. del Sitio</a></li>
+                </ul>
+            </aside>
+
+            <main class="admin-content">
+                <div id="global-admin-message" class="mensaje" style="display:none;"></div>
+
+                <section id="dashboard-section" class="admin-section active">
+                    <h3>📊 Dashboard</h3>
+                    <p>Bienvenido al panel de administración. Aquí tienes un resumen general del sitio.</p>
+                    <div class="stats-grid-admin">
+                        <div class="stat-card-admin">
+                            <h4>Total de Usuarios</h4>
+                            <p class="stat-value-admin" id="stat-total-usuarios">Cargando...</p>
+                        </div>
+                        <div class="stat-card-admin">
+                            <h4>Total de Diarios</h4>
+                            <p class="stat-value-admin" id="stat-total-diarios">Cargando...</p>
+                        </div>
+                        <div class="stat-card-admin">
+                            <h4>Total de Eventos</h4>
+                            <p class="stat-value-admin" id="stat-total-eventos">Cargando...</p>
+                        </div>
+                        </div>
+                </section>
+
+                <section id="user-management-section" class="admin-section">
+                    <h3>Gestión de Usuarios</h3>
+                    <div class="search-bar-admin">
+                        <input type="search" id="admin-user-search" class="form-control" placeholder="Buscar usuarios por nombre o email...">
+                        <button class="btn btn-primario" id="btn-add-user" style="white-space: nowrap;">+ Nuevo Usuario</button>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="user-table">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Email</th>
+                                    <th>Rol (Global)</th>
+                                    <th>Registrado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="user-list-tbody">
+                            </tbody>
+                        </table>
+                    </div>
+                    <p id="user-list-message" class="mensaje mensaje-vacio" style="display:none;">No se encontraron usuarios.</p>
+                </section>
+                
+                <section id="diary-management-section" class="admin-section">
+                    <h3>📚 Gestión de Diarios y Acceso</h3>
+                    <div class="admin-diario-selector-group">
+                        <label for="admin-diario-select">Selecciona un Diario:</label>
+                        <select id="admin-diario-select" class="form-control">
+                            <option value="">Cargando diarios...</option>
+                        </select>
+                    </div>
+                    
+                    <div id="admin-diario-management-ui" style="display: none;">
+                        <hr style="margin: 25px 0;">
+                        <h4>Conceder Acceso</h4>
+                        <div id="admin-grant-access-message" class="mensaje" style="display:none;"></div>
+                        <form id="form-admin-grant-access" class="search-bar-admin">
+                            <select id="admin-user-select" class="form-control" required>
+                                <option value="">Seleccionar Usuario</option>
+                            </select>
+                            <select id="admin-role-select" class="form-control" required>
+                                <option value="viewer">Lector</option>
+                                <option value="editor">Editor</option>
+                                <option value="owner">Dueño</option>
+                            </select>
+                            <button type="submit" class="btn btn-primario">Conceder</button>
+                        </form>
+                        
+                        <h4 style="margin-top: 30px;">Usuarios con Acceso a este Diario</h4>
+                        <ul id="admin-shared-users-list" class="shared-users-list-admin">
+                           <p class="mensaje mensaje-carga">Selecciona un diario para ver los accesos.</p>
+                        </ul>
+                    </div>
+                </section>
+
+                <section id="site-settings-section" class="admin-section">
+                    <h3>⚙️ Configuración General del Sitio</h3>
+                    <div id="site-settings-message" class="mensaje" style="display:none;"></div>
+                    <form id="form-site-settings">
+                        <div class="form-group-admin">
+                            <label for="site-global-name-input">Nombre Global del Sitio:</label>
+                            <input type="text" id="site-global-name-input" class="form-control" required>
+                            <small>Este nombre podría usarse en títulos de página o correos globales.</small>
+                        </div>
+                        <div class="form-group-admin checkbox-container-admin">
+                            <input type="checkbox" id="allow-new-registrations-checkbox" class="form-checkbox-admin">
+                            <label for="allow-new-registrations-checkbox" class="form-checkbox-label-admin">Permitir nuevos registros de usuarios</label>
+                        </div>
+                        <button type="submit" class="btn btn-primario" id="btn-save-site-settings">Guardar Configuración</button>
+                    </form>
+                </section>
+            </main>
+        </div>
+
+        <footer>
+            <p>&copy; <span id="current-year"></span> Panel de Administración - Mi Pequeño Tesoro</p>
+        </footer>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="modal-user-form" style="display:none;">
+        <div class="modal-contenido">
+            <h2 id="modal-user-title">Añadir Nuevo Usuario</h2>
+            <div id="modal-user-message" class="mensaje" style="display:none;"></div>
+            <form id="form-user-admin" novalidate>
+                <input type="hidden" id="user-id-admin">
+                <div class="form-group">
+                    <label for="user-name-admin">Nombre:</label>
+                    <input type="text" id="user-name-admin" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="user-email-admin">Correo Electrónico:</label>
+                    <input type="email" id="user-email-admin" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="user-password-admin">Contraseña:</label>
+                    <input type="password" id="user-password-admin" class="form-control" autocomplete="new-password">
+                    <small id="password-help-text">Dejar en blanco para no cambiar. Mínimo 8 caracteres para usuarios nuevos.</small>
+                </div>
+                <div class="form-group">
+                    <label for="user-role-admin">Rol (Global):</label>
+                    <select id="user-role-admin" class="form-control" required>
+                        <option value="usuario">Usuario</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" id="btn-cancelar-user-modal" class="btn btn-secundario">Cancelar</button>
+                    <button type="submit" id="btn-guardar-user-admin" class="btn btn-primario">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="modal" id="modal-show-temporary-password" style="display:none;">
+        <div class="modal-contenido">
+            <h2 id="modal-temp-pass-title">Contraseña Temporal Generada</h2>
+            <p>Comunica esta contraseña al usuario de forma segura. Deberá cambiarla al iniciar sesión:</p>
+            <div class="form-group" style="text-align: center;">
+                <input type="text" id="generated-temp-password" class="form-control" readonly style="font-size: 1.2rem; font-weight: bold; text-align: center; border: 2px dashed var(--color-primario); background-color: var(--color-fondo);">
+                <button type="button" id="btn-copy-temp-password" class="btn btn-secundario" style="margin-top: 10px;">Copiar</button>
+            </div>
+            <div id="temp-pass-copy-message" class="mensaje mensaje-exito" style="display:none; margin-top:10px;"></div>
+            <div class="form-actions">
+                <button type="button" id="btn-close-temp-pass-modal" class="btn btn-primario">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/theme-manager.js" defer></script>
+    <script src="/js/utils.js" defer></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- ESTADO GLOBAL Y ELEMENTOS ---
+            let todosLosUsuariosAdmin = [];
+            const globalAdminMessageEl = document.getElementById('global-admin-message');
+            const btnLogoutEl = document.getElementById('btn-logout');
+
+            // --- NAVEGACIÓN Y CARGA DE SECCIONES ---
+            const adminNavLinks = document.querySelectorAll('.admin-sidebar .admin-nav-link');
+            const adminSections = document.querySelectorAll('.admin-content .admin-section');
+
+            function activateSection(sectionId) {
+                adminSections.forEach(section => section.classList.toggle('active', section.id === sectionId));
+                adminNavLinks.forEach(link => link.classList.toggle('active', link.dataset.section === sectionId));
+                window.location.hash = sectionId.replace('-section', '');
+
+                if (sectionId === 'user-management-section') cargarUsuariosAdmin();
+                else if (sectionId === 'dashboard-section') cargarDashboardStats();
+                else if (sectionId === 'site-settings-section') cargarSiteSettings();
+                else if (sectionId === 'diary-management-section') inicializarGestionDiarios();
+            }
+
+            adminNavLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    activateSection(link.dataset.section);
+                });
+            });
+
+            const initialSectionId = (window.location.hash ? window.location.hash.substring(1) : 'dashboard') + '-section';
+            activateSection(document.getElementById(initialSectionId) ? initialSectionId : 'dashboard-section');
+
+            // --- DASHBOARD ---
+            async function cargarDashboardStats() {
+                const statUsuarios = document.getElementById('stat-total-usuarios');
+                const statDiarios = document.getElementById('stat-total-diarios');
+                const statEventos = document.getElementById('stat-total-eventos');
+                
+                if (!statUsuarios) return;
+                statUsuarios.textContent = statDiarios.textContent = statEventos.textContent = 'Cargando...';
+                
+                try {
+                    const stats = await fetchAPI('/api/admin/dashboard-stats');
+                    statUsuarios.textContent = stats.totalUsuarios ?? '0';
+                    statDiarios.textContent = stats.totalDiarios ?? '0';
+                    statEventos.textContent = stats.totalEventos ?? '0';
+                } catch (error) {
+                    statUsuarios.textContent = statDiarios.textContent = statEventos.textContent = 'Error';
+                    if (error.message !== 'No autorizado') {
+                        mostrarMensajeGlobal('Error cargando estadísticas: ' + error.message, 'error', globalAdminMessageEl, 5000);
+                    }
+                }
+            }
+            
+            // --- GESTIÓN DE DIARIOS ---
+            const adminDiarioSelect = document.getElementById('admin-diario-select');
+            const adminDiarioManagementUI = document.getElementById('admin-diario-management-ui');
+            const adminUserSelect = document.getElementById('admin-user-select');
+            const formAdminGrantAccess = document.getElementById('form-admin-grant-access');
+            const adminGrantAccessMessageEl = document.getElementById('admin-grant-access-message');
+            const adminSharedUsersList = document.getElementById('admin-shared-users-list');
+
+            async function inicializarGestionDiarios() {
+                await Promise.all([
+                    cargarTodosLosDiariosAdmin(),
+                    cargarTodosLosUsuariosParaDropdown()
+                ]);
+            }
+
+            async function cargarTodosLosDiariosAdmin() {
+                try {
+                    const diarios = await fetchAPI('/api/admin/diarios');
+                    adminDiarioSelect.innerHTML = '<option value="">-- Selecciona un diario --</option>';
+                    diarios.forEach(d => {
+                        const option = new Option(`${d.nombre_principal_bebe} (Creador: ${d.nombre_creador})`, d.id);
+                        adminDiarioSelect.appendChild(option);
+                    });
+                } catch(error) {
+                    mostrarMensajeGlobal('Error al cargar diarios: ' + error.message, 'error', globalAdminMessageEl, 5000);
+                }
+            }
+
+            async function cargarTodosLosUsuariosParaDropdown() {
+                 try {
+                    const usuarios = await fetchAPI('/api/admin/users');
+                    adminUserSelect.innerHTML = '<option value="">-- Selecciona un usuario --</option>';
+                    usuarios.forEach(u => {
+                        const option = new Option(`${u.nombre} (${u.email})`, u.id);
+                        adminUserSelect.appendChild(option);
+                    });
+                } catch(error) {
+                    mostrarMensajeGlobal('Error al cargar la lista de usuarios para conceder acceso.', 'error', adminGrantAccessMessageEl, 5000);
+                }
+            }
+
+            async function cargarUsuariosConAccesoAdmin(diarioId) {
+                if (!diarioId) {
+                    adminSharedUsersList.innerHTML = '<p class="mensaje mensaje-info">Selecciona un diario para ver los accesos.</p>';
+                    return;
+                }
+                adminSharedUsersList.innerHTML = '<p class="mensaje mensaje-carga">Cargando...</p>';
+                try {
+                    const sharedUsers = await fetchAPI(`/api/admin/diarios/${diarioId}/shared-users`);
+                    adminSharedUsersList.innerHTML = '';
+                    if (sharedUsers.length === 0) {
+                         adminSharedUsersList.innerHTML = '<p class="mensaje mensaje-vacio">Nadie tiene acceso a este diario aún.</p>';
+                         return;
+                    }
+                    sharedUsers.forEach(user => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `
+                            <div class="user-info">
+                                <strong>${user.nombre}</strong>
+                                <small>${user.email}</small>
+                            </div>
+                            <span class="user-role">${user.rol_en_diario}</span>
+                            <button class="btn btn-admin-delete btn-pequeno" data-user-id="${user.user_id}" title="Revocar Acceso">🗑️</button>
+                        `;
+                        adminSharedUsersList.appendChild(li);
+                    });
+                } catch (error) {
+                    adminSharedUsersList.innerHTML = `<p class="mensaje mensaje-error">Error al cargar accesos: ${error.message}</p>`;
+                }
+            }
+            
+            adminDiarioSelect.addEventListener('change', (e) => {
+                const diarioId = e.target.value;
+                adminDiarioManagementUI.style.display = diarioId ? 'block' : 'none';
+                if (diarioId) cargarUsuariosConAccesoAdmin(diarioId);
+            });
+
+            formAdminGrantAccess.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const diarioId = adminDiarioSelect.value;
+                const userId = document.getElementById('admin-user-select').value;
+                const rol = document.getElementById('admin-role-select').value;
+                const boton = e.target.querySelector('button[type="submit"]');
+
+                if (!diarioId || !userId) {
+                    mostrarMensajeGlobal('Debes seleccionar un diario y un usuario.', 'error', adminGrantAccessMessageEl, 3000);
+                    return;
+                }
+                
+                setBotonCargando(boton, true, 'Concediendo...');
+                try {
+                    await fetchAPI(`/api/admin/diarios/${diarioId}/share`, 'POST', { userId, rol_asignado: rol });
+                    mostrarMensajeGlobal('Acceso concedido/actualizado con éxito.', 'exito', adminGrantAccessMessageEl, 3000);
+                    cargarUsuariosConAccesoAdmin(diarioId);
+                } catch (error) {
+                    mostrarMensajeGlobal('Error: ' + error.message, 'error', adminGrantAccessMessageEl, 4000);
+                } finally {
+                    setBotonCargando(boton, false);
+                }
+            });
+
+            adminSharedUsersList.addEventListener('click', async (e) => {
+                const botonRevocar = e.target.closest('.btn-admin-delete');
+                if (botonRevocar) {
+                    const diarioId = adminDiarioSelect.value;
+                    const userId = botonRevocar.dataset.userId;
+                    if (confirm('¿Estás seguro de que quieres revocar el acceso para este usuario?')) {
+                        setBotonCargando(botonRevocar, true, '...');
+                        try {
+                            await fetchAPI(`/api/admin/diarios/${diarioId}/access/${userId}`, 'DELETE');
+                            mostrarMensajeGlobal('Acceso revocado.', 'exito', globalAdminMessageEl, 3000);
+                            cargarUsuariosConAccesoAdmin(diarioId);
+                        } catch (error) {
+                             mostrarMensajeGlobal('Error al revocar acceso: ' + error.message, 'error', globalAdminMessageEl, 4000);
+                        } finally {
+                             setBotonCargando(botonRevocar, false);
+                        }
+                    }
+                }
+            });
+            
+            // --- GESTIÓN DE USUARIOS ---
+            const userListTbody = document.getElementById('user-list-tbody');
+            const userListMessageEl = document.getElementById('user-list-message');
+            const btnAddUser = document.getElementById('btn-add-user');
+            const adminUserSearchInput = document.getElementById('admin-user-search');
+            const modalUserForm = document.getElementById('modal-user-form');
+            const modalUserTitle = document.getElementById('modal-user-title');
+            const modalUserMessageEl = document.getElementById('modal-user-message');
+            const formUserAdmin = document.getElementById('form-user-admin');
+            const userIdAdminInput = document.getElementById('user-id-admin');
+            const userNameAdminInput = document.getElementById('user-name-admin');
+            const userEmailAdminInput = document.getElementById('user-email-admin');
+            const userPasswordAdminInput = document.getElementById('user-password-admin');
+            const userRoleAdminInput = document.getElementById('user-role-admin');
+            const btnCancelarUserModal = document.getElementById('btn-cancelar-user-modal');
+            const passwordHelpText = document.getElementById('password-help-text');
+            const modalShowTemporaryPassword = document.getElementById('modal-show-temporary-password');
+            const generatedTempPasswordInput = document.getElementById('generated-temp-password');
+            const btnCloseTempPassModal = document.getElementById('btn-close-temp-pass-modal');
+            const btnCopyTempPassword = document.getElementById('btn-copy-temp-password');
+            const tempPassCopyMessageEl = document.getElementById('temp-pass-copy-message');
+
+            async function cargarUsuariosAdmin() {
+                if (!userListTbody || !userListMessageEl) return;
+                userListTbody.innerHTML = '<tr><td colspan="5"><p class="mensaje mensaje-carga">Cargando usuarios...</p></td></tr>';
+                userListMessageEl.style.display = 'none';
+                try {
+                    const usuarios = await fetchAPI('/api/admin/users');
+                    todosLosUsuariosAdmin = usuarios || [];
+                    renderizarListaUsuarios(todosLosUsuariosAdmin);
+                } catch (error) {
+                    console.error("Error cargando usuarios para admin:", error);
+                    userListTbody.innerHTML = '';
+                    if (error.message !== 'No autorizado') {
+                        mostrarMensajeGlobal(`Error al cargar usuarios: ${error.message}`, 'error', globalAdminMessageEl, 5000);
+                    }
+                }
+            }
+
+            function renderizarListaUsuarios(usuarios) {
+                if (!userListTbody) return;
+                userListTbody.innerHTML = '';
+                if (usuarios && usuarios.length > 0) {
+                    userListMessageEl.style.display = 'none';
+                    usuarios.forEach(user => {
+                        const row = userListTbody.insertRow();
+                        row.dataset.userid = user.id;
+                        row.innerHTML = `
+                            <td>${user.nombre || 'N/A'}</td>
+                            <td>${user.email}</td>
+                            <td>${user.rol || 'Usuario'}</td>
+                            <td>${new Date(user.created_at).toLocaleDateString('es-ES')}</td>
+                            <td class="user-actions">
+                                <button class="btn btn-secundario btn-admin-edit" title="Editar">✏️</button>
+                                <button class="btn btn-primario btn-admin-reset-pass" title="Generar Contraseña Temporal">🔑</button>
+                                <button class="btn btn-admin-delete" style="background-color: var(--color-error); color:white;" title="Eliminar">🗑️</button>
+                            </td>
+                        `;
+                    });
+                } else {
+                    userListMessageEl.textContent = 'No se encontraron usuarios.';
+                    userListMessageEl.className = 'mensaje mensaje-vacio';
+                    userListMessageEl.style.display = 'block';
+                }
+            }
+            
+            adminUserSearchInput?.addEventListener('input', function() {
+                const termino = this.value.toLowerCase().trim();
+                const filtrados = todosLosUsuariosAdmin.filter(u => 
+                    (u.nombre || '').toLowerCase().includes(termino) || (u.email || '').toLowerCase().includes(termino)
+                );
+                renderizarListaUsuarios(filtrados);
+            });
+
+            function abrirModalNuevoUsuario() {
+                formUserAdmin.reset();
+                userIdAdminInput.value = '';
+                modalUserTitle.textContent = 'Añadir Nuevo Usuario';
+                userPasswordAdminInput.setAttribute('required', 'required');
+                passwordHelpText.textContent = 'Mínimo 8 caracteres.';
+                mostrarMensajeGlobal('', '', modalUserMessageEl);
+                modalUserForm.style.display = 'flex';
+                userNameAdminInput.focus();
+            }
+
+            function abrirModalEditarUsuario(usuario) {
+                formUserAdmin.reset();
+                userIdAdminInput.value = usuario.id;
+                modalUserTitle.textContent = 'Editar Usuario';
+                userNameAdminInput.value = usuario.nombre || '';
+                userEmailAdminInput.value = usuario.email || '';
+                userRoleAdminInput.value = usuario.rol || 'usuario';
+                userPasswordAdminInput.removeAttribute('required');
+                passwordHelpText.textContent = 'Dejar en blanco para no cambiar la contraseña.';
+                mostrarMensajeGlobal('', '', modalUserMessageEl);
+                modalUserForm.style.display = 'flex';
+                userNameAdminInput.focus();
+            }
+
+            function cerrarModalUsuario() {
+                if (modalUserForm) modalUserForm.style.display = 'none';
+            }
+
+            async function manejarSubmitUsuarioForm(e) {
+                e.preventDefault();
+                const boton = e.target.querySelector('button[type="submit"]');
+                setBotonCargando(boton, true);
+                
+                const userId = userIdAdminInput.value;
+                const esNuevo = !userId;
+                const userData = {
+                    nombre: userNameAdminInput.value,
+                    email: userEmailAdminInput.value,
+                    rol: userRoleAdminInput.value,
+                    password: userPasswordAdminInput.value || undefined
+                };
+
+                try {
+                    const endpoint = esNuevo ? '/api/admin/users' : `/api/admin/users/${userId}`;
+                    const method = esNuevo ? 'POST' : 'PUT';
+                    await fetchAPI(endpoint, method, userData);
+                    mostrarMensajeGlobal(`Usuario ${esNuevo ? 'creado' : 'actualizado'} con éxito.`, 'exito', globalAdminMessageEl, 3000);
+                    cerrarModalUsuario();
+                    await cargarUsuariosAdmin(); // Recargar lista de usuarios
+                    await cargarTodosLosUsuariosParaDropdown(); // Recargar dropdown en gestión de diarios
+                } catch (error) {
+                    mostrarMensajeGlobal(error.message, 'error', modalUserMessageEl, 5000);
+                } finally {
+                    setBotonCargando(boton, false);
+                }
+            }
+
+            userListTbody.addEventListener('click', async e => {
+                const boton = e.target.closest('button');
+                if (!boton) return;
+                const fila = boton.closest('tr');
+                const userId = fila.dataset.userid;
+                const usuario = todosLosUsuariosAdmin.find(u => u.id === parseInt(userId));
+
+                if (boton.classList.contains('btn-admin-edit')) {
+                    abrirModalEditarUsuario(usuario);
+                } else if (boton.classList.contains('btn-admin-delete')) {
+                    if (confirm(`¿Estás seguro de eliminar al usuario ${usuario.nombre}? Esta acción es irreversible.`)) {
+                         try {
+                            await fetchAPI(`/api/admin/users/${userId}`, 'DELETE');
+                            mostrarMensajeGlobal('Usuario eliminado.', 'exito', globalAdminMessageEl, 3000);
+                            await cargarUsuariosAdmin();
+                            await cargarTodosLosUsuariosParaDropdown();
+                         } catch (error) {
+                            mostrarMensajeGlobal(error.message, 'error', globalAdminMessageEl, 4000);
+                         }
+                    }
+                } else if (boton.classList.contains('btn-admin-reset-pass')) {
+                    // Lógica para resetear contraseña...
+                }
+            });
+            
+            btnAddUser?.addEventListener('click', abrirModalNuevoUsuario);
+            btnCancelarUserModal?.addEventListener('click', cerrarModalUsuario);
+            formUserAdmin?.addEventListener('submit', manejarSubmitUsuarioForm);
+
+            // --- CONFIGURACIÓN DEL SITIO ---
+            async function cargarSiteSettings() {
+                const siteGlobalNameInput = document.getElementById('site-global-name-input');
+                const allowNewRegistrationsCheckbox = document.getElementById('allow-new-registrations-checkbox');
+                const siteSettingsMessageEl = document.getElementById('site-settings-message');
+                if (!siteGlobalNameInput || !allowNewRegistrationsCheckbox || !siteSettingsMessageEl) return;
+                
+                mostrarMensajeGlobal('Cargando...', 'carga', siteSettingsMessageEl);
+                try {
+                    const settings = await fetchAPI('/api/admin/site-settings');
+                    if (settings) {
+                        siteGlobalNameInput.value = settings.siteGlobalName || 'Mi Pequeño Tesoro';
+                        allowNewRegistrationsCheckbox.checked = settings.allowNewRegistrations === true;
+                        mostrarMensajeGlobal('', '', siteSettingsMessageEl);
+                    }
+                } catch (error) {
+                    mostrarMensajeGlobal(`Error: ${error.message}`, 'error', siteSettingsMessageEl, 5000);
+                }
+            }
+            
+            document.getElementById('form-site-settings')?.addEventListener('submit', async e => {
+                e.preventDefault();
+                const siteSettingsMessageEl = document.getElementById('site-settings-message');
+                const siteGlobalNameInput = document.getElementById('site-global-name-input');
+                const allowNewRegistrationsCheckbox = document.getElementById('allow-new-registrations-checkbox');
+                const boton = e.target.querySelector('button[type="submit"]');
+
+                setBotonCargando(boton, true);
+                try {
+                    await fetchAPI('/api/admin/site-settings', 'PUT', {
+                        siteGlobalName: siteGlobalNameInput.value.trim(),
+                        allowNewRegistrations: allowNewRegistrationsCheckbox.checked
+                    });
+                    mostrarMensajeGlobal('Configuración guardada.', 'exito', siteSettingsMessageEl, 3000);
+                } catch (error) {
+                    mostrarMensajeGlobal(`Error: ${error.message}`, 'error', siteSettingsMessageEl, 5000);
+                } finally {
+                    setBotonCargando(boton, false);
+                }
+            });
+
+            // --- LISTENERS GLOBALES ---
+            btnLogoutEl.addEventListener('click', cerrarSesion);
+        });
+    </script>
+</body>
+</html>

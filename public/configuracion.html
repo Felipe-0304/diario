@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="es" id="html-theme">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración - Mi Pequeño Tesoro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Comic+Neue:wght@400;700&family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --color-primario: #FFB6C1;
+            --color-secundario: #FFD1DC;
+            --color-accento: #FFD700;
+            --color-texto: #5D3B45;
+            --color-texto-claro: #A78B94;
+            --color-fondo: #FFF9FB;
+            --color-tarjetas: #FFFFFF;
+            --color-bordes: #F0D6DE;
+            --fuente-principal: 'Comic Neue', cursive;
+            --tamano-fuente: 16px;
+        }
+        body { font-family: var(--fuente-principal); background-color: var(--color-fondo); color: var(--color-texto); margin: 0; padding: 0; line-height: 1.6; font-size: var(--tamano-fuente); }
+        .spinner { width: 1em; height: 1em; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; display: inline-block; vertical-align: middle; margin-right: 8px; animation: spin 0.75s linear infinite; }
+        button .spinner + span { vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; margin-bottom: 30px; position: relative; }
+        h1#titulo-principal-config { font-family: 'Pacifico', cursive; color: var(--color-primario); font-size: 2.5rem; margin-bottom: 20px; }
+        .configuracion-seccion { background-color: var(--color-tarjetas); padding: 25px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); border: 1px solid var(--color-bordes); }
+        .configuracion-seccion h2 { font-family: 'Pacifico', cursive; color: var(--color-primario); margin-top: 0; text-align: center; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; }
+        .form-control { width: 100%; padding: 12px; border: 1px solid var(--color-bordes); border-radius: 10px; font-family: inherit; background-color: var(--color-fondo); color: var(--color-texto); transition: all 0.3s; box-sizing: border-box; }
+        .form-control-color { height: 50px; padding: 5px; -webkit-appearance: none; -moz-appearance: none; appearance: none; background: none; border: 1px solid var(--color-bordes); }
+        .form-control-color::-webkit-color-swatch-wrapper { padding: 0; }
+        .form-control-color::-webkit-color-swatch { border: none; border-radius: 8px; }
+        .form-control-color::-moz-color-swatch { border: none; border-radius: 8px; }
+        .form-control:focus { outline: none; border-color: var(--color-primario); box-shadow: 0 0 0 2px var(--color-secundario); }
+        .configuracion-acciones { display: flex; justify-content: space-between; margin-top: 30px; gap: 15px; flex-wrap: wrap; }
+        .btn { padding: 12px 25px; border: none; border-radius: 25px; font-family: inherit; font-weight: bold; cursor: pointer; transition: all 0.3s; flex-grow: 1; min-width: 180px; }
+        .btn-primario { background-color: var(--color-primario); color: white; }
+        .btn-secundario { background-color: var(--color-texto-claro); color: white; }
+        .btn-primario:hover:not(:disabled), .btn-secundario:hover:not(:disabled) { opacity: 0.8; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+        .btn:disabled { opacity: 0.7; cursor: not-allowed; }
+        .tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid var(--color-bordes); flex-wrap: wrap;}
+        .tab { padding: 10px 15px; cursor: pointer; font-weight: bold; border-radius: 5px 5px 0 0; transition: all 0.3s; margin-right: 5px; margin-bottom: -2px; color: var(--color-texto-claro); white-space: nowrap; }
+        .tab.active { background-color: var(--color-primario); color: white; }
+        .config-section { display: none; }
+        .config-section.active { display: block; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .lista-diarios { list-style: none; padding: 0; }
+        .lista-diarios li { padding: 12px 15px; margin-bottom: 8px; border-radius: 8px; background-color: var(--color-fondo); border: 1px solid var(--color-bordes); display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background-color 0.3s, border-color 0.3s; }
+        .lista-diarios li:hover { background-color: var(--color-secundario); border-color: var(--color-primario); }
+        .lista-diarios li.active-diario-item { background-color: var(--color-primario); color: white; border-color: var(--color-primario); font-weight: bold; }
+        .lista-diarios li.active-diario-item .diario-rol { color: white; opacity: 0.8;}
+        .diario-nombre { flex-grow: 1; }
+        .diario-rol { font-size: 0.8em; color: var(--color-texto-claro); margin-left: 10px; }
+        body.sin-diario-activo .config-section:not(#mis-diarios):not(#seguridad) { display: none !important; }
+        body.sin-diario-activo .configuracion-acciones { display: none !important; }
+        body.sin-diario-activo .tabs .tab:not([data-tab="mis-diarios"]):not([data-tab="seguridad"]) { display: none; }
+        #foto-bebe-preview { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 3px solid var(--color-primario); margin-bottom: 10px; background-color: #eee; }
+        #foto-bebe-container { text-align: center; }
+        .opciones-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-top: 10px; }
+        .opcion { display: flex; flex-direction: column; align-items: center; cursor: pointer; padding: 10px; border-radius: 10px; transition: all 0.3s; border: 2px solid transparent; background-color: var(--color-fondo); }
+        .opcion.selected { border-color: var(--color-primario); background-color: var(--color-secundario); }
+        .preview { width: 60px; height: 60px; border-radius: 50%; margin-bottom: 8px; border: 3px solid var(--color-bordes); display: flex; align-items: center; justify-content: center; font-weight: bold; background-color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 id="titulo-principal-config">⚙️ Configuración</h1>
+            <button id="btn-logout" title="Cerrar sesión" style="position: absolute; top: 20px; right: 20px; font-size: 1.5rem; background: none; border: none; cursor:pointer;">👋</button>
+            <nav>
+                <ul>
+                    <li><a href="index.html">🏠 Inicio</a></li>
+                    <li><a href="fotos.html">📷 Fotos</a></li>
+                    <li><a href="calendario.html">📅 Calendario</a></li>
+                    <li><a href="linea-tiempo.html">⏳ Línea de Tiempo</a></li>
+                    <li><a href="configuracion.html" class="active">⚙️ Configuración</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <div id="global-config-message" class="mensaje" style="display:none;"></div>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="mis-diarios">📚 Mis Diarios</div>
+            <div class="tab" data-tab="apariencia">🎨 Apariencia</div>
+            <div class="tab" data-tab="perfil">👶 Perfil del Bebé</div>
+            <div class="tab" data-tab="seguridad">🔒 Cuenta</div>
+        </div>
+
+        <div id="mis-diarios" class="config-section active">
+            <div class="configuracion-seccion">
+                <h2>Mis Diarios</h2>
+                <p>Selecciona un diario para establecerlo como activo. La gestión de acceso ahora se realiza desde el panel de administración.</p>
+                <ul id="lista-mis-diarios" class="lista-diarios">
+                    <p class="mensaje mensaje-carga">Cargando tus diarios...</p>
+                </ul>
+                <button id="btn-crear-nuevo-diario-modal" class="btn btn-primario" style="margin-top: 20px;">+ Crear Nuevo Diario</button>
+            </div>
+        </div>
+        
+        <div id="apariencia" class="config-section">
+            <div class="configuracion-seccion">
+                 <h2>Personalización del Diario Activo</h2>
+                <div class="form-group"> <label for="nombre-diario-personalizado">Nombre del Diario (Personalizado):</label> <input type="text" id="nombre-diario-personalizado" class="form-control" placeholder="Ej: El Tesoro de Lucas"> </div>
+                <div class="form-group"> <label for="mensaje-bienvenida">Mensaje de Bienvenida:</label> <input type="text" id="mensaje-bienvenida" class="form-control" placeholder="Ej: ¡Bienvenido/a! Aquí tienes un resumen..."> </div>
+                <div class="form-group"> <label for="color-primario">Color Principal:</label> <input type="color" id="color-primario" class="form-control form-control-color" value="#FFB6C1"> </div>
+                <div class="form-group"> <label for="color-secundario">Color Secundario:</label> <input type="color" id="color-secundario" class="form-control form-control-color" value="#FFD1DC"> </div>
+            </div>
+             <div class="configuracion-seccion">
+                <h2>Tipografía</h2>
+                 <div class="form-group"> <label>Fuente Principal:</label> <div class="opciones-container" id="fuentes-container"></div> </div>
+                 <div class="form-group"> <label for="tamano-fuente">Tamaño de Fuente Base:</label> <select id="tamano-fuente" class="form-control"></select> </div>
+            </div>
+        </div>
+        <div id="perfil" class="config-section">
+            <div class="configuracion-seccion">
+                 <h2>Información del Bebé</h2>
+                 <div id="foto-bebe-container">
+                    <img id="foto-bebe-preview" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Foto del bebé">
+                    <input type="file" id="foto-bebe-input" accept="image/*" style="display: none;">
+                    <button id="btn-cambiar-foto" class="btn btn-secundario btn-pequeno">Cambiar Foto</button>
+                </div>
+                <div class="form-group"> <label for="nombre-bebe-completo">Nombre completo:</label> <input type="text" id="nombre-bebe-completo" class="form-control"> </div>
+                <div class="form-group"> <label for="fecha-nacimiento">Fecha de nacimiento:</label> <input type="date" id="fecha-nacimiento" class="form-control"> </div>
+                <!-- Aquí puedes añadir más campos del perfil si lo deseas -->
+            </div>
+        </div>
+        <div id="seguridad" class="config-section">
+            <!-- (El HTML de la sección de seguridad no cambia) -->
+        </div>
+        
+        <div class="configuracion-acciones">
+            <button id="btn-restaurar-config-diario" class="btn btn-secundario">Restaurar Predeterminados</button>
+            <button id="btn-guardar-config-diario" class="btn btn-primario">Guardar Cambios</button>
+        </div>
+        
+        <div id="modal-crear-diario" class="modal" style="display:none; z-index: 1040;">
+            <div class="modal-contenido">
+                <h2>Crear Nuevo Diario</h2>
+                <div id="crear-diario-message" class="mensaje" style="display:none;"></div>
+                <form id="form-crear-diario" novalidate>
+                    <div class="form-group">
+                        <label for="nombre-bebe-nuevo-diario">Nombre principal del bebé para este diario:</label>
+                        <input type="text" id="nombre-bebe-nuevo-diario" class="form-control" required placeholder="Ej: Pequeño Leo">
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="btn-cancelar-crear-diario" class="btn btn-secundario">Cancelar</button>
+                        <button type="submit" id="btn-guardar-nuevo-diario" class="btn btn-primario">Crear Diario</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/theme-manager.js" defer></script>
+    <script src="/js/utils.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- ESTADO Y ELEMENTOS GLOBALES ---
+            let configuracionActualDelDiario = { perfil_bebe: {} };
+            const globalConfigMessageEl = document.getElementById('global-config-message');
+            const btnGuardarConfigDiario = document.getElementById('btn-guardar-config-diario');
+            const fuentesDisponibles = [
+                { nombre: "Comic Neue", valor: "'Comic Neue', cursive" }, { nombre: "Pacifico", valor: "'Pacifico', cursive" },
+                { nombre: "Roboto", valor: "'Roboto', sans-serif" }, { nombre: "Open Sans", valor: "'Open Sans', sans-serif" },
+                { nombre: "Dancing Script", valor: "'Dancing Script', cursive" }
+            ];
+            const tamanosFuenteDisponibles = ['14px', '15px', '16px', '17px', '18px', '20px', '22px'];
+
+            // --- INICIALIZACIÓN ---
+            async function main() {
+                let activeDiarioId = getActiveDiarioId();
+                if (!activeDiarioId) {
+                    try {
+                        const diarios = await fetchAPI('/api/diarios');
+                        if (diarios && diarios.length > 0) {
+                            activeDiarioId = diarios[0].id;
+                            setActiveDiarioId(activeDiarioId);
+                        } else {
+                            document.body.classList.add('sin-diario-activo');
+                        }
+                    } catch (e) {
+                         document.body.classList.add('sin-diario-activo');
+                    }
+                }
+                
+                await cargarYMostrarListaDeDiarios();
+                if (getActiveDiarioId()) {
+                    await cargarConfiguracionDelDiarioActivo();
+                }
+                
+                configurarEventListenersGenerales();
+                popularSelectoresTipografia();
+            }
+
+            // --- LÓGICA DE CARGA Y RENDERIZADO ---
+            async function cargarYMostrarListaDeDiarios() {
+                const listaMisDiariosEl = document.getElementById('lista-mis-diarios');
+                listaMisDiariosEl.innerHTML = '<p class="mensaje mensaje-carga">Cargando...</p>';
+                try {
+                    const diarios = await fetchAPI('/api/diarios');
+                    listaMisDiariosEl.innerHTML = '';
+                    if (!diarios || diarios.length === 0) {
+                        listaMisDiariosEl.innerHTML = '<p class="mensaje mensaje-vacio">No tienes diarios.</p>';
+                        return;
+                    }
+                    const activeId = getActiveDiarioId();
+                    diarios.forEach(diario => {
+                        const li = document.createElement('li');
+                        li.dataset.diarioId = diario.id;
+                        li.innerHTML = `<span class="diario-nombre">${diario.nombre_principal_bebe} (Creador: ${diario.nombre_creador})</span><span class="diario-rol">Tu rol: ${diario.rol_en_diario}</span>`;
+                        if (diario.id === activeId) li.classList.add('active-diario-item');
+                        li.addEventListener('click', () => setActiveDiarioId(diario.id));
+                        listaMisDiariosEl.appendChild(li);
+                    });
+                } catch(error) {
+                    listaMisDiariosEl.innerHTML = '<p class="mensaje mensaje-error">Error al cargar diarios.</p>';
+                }
+            }
+            
+             async function cargarConfiguracionDelDiarioActivo() {
+                try {
+                    const config = await fetchAPI('/api/configuracion');
+                    if(config) {
+                        actualizarControlesFormularioDiario(config);
+                    }
+                } catch (error) {
+                    mostrarMensajeGlobal('Error al cargar la configuración del diario.', 'error', globalConfigMessageEl, 4000);
+                }
+            }
+            
+            function actualizarControlesFormularioDiario(config) {
+                configuracionActualDelDiario = JSON.parse(JSON.stringify(config));
+                
+                document.getElementById('nombre-diario-personalizado').value = config.nombre_diario_personalizado || '';
+                document.getElementById('mensaje-bienvenida').value = config.mensaje_bienvenida || '';
+                document.getElementById('color-primario').value = config.color_primario || '#FFB6C1';
+                document.getElementById('color-secundario').value = config.color_secundario || '#FFD1DC';
+                document.getElementById('tamano-fuente').value = config.tamano_fuente || '16px';
+                
+                document.querySelectorAll('#fuentes-container .opcion').forEach(opcion => {
+                    opcion.classList.toggle('selected', opcion.dataset.fuente === (config.fuente_principal || "'Comic Neue', cursive"));
+                });
+                
+                const perfil = config.perfil_bebe || {};
+                document.getElementById('nombre-bebe-completo').value = perfil.nombre_completo || '';
+                document.getElementById('fecha-nacimiento').value = perfil.fecha_nacimiento || '';
+                
+                const fotoPreview = document.getElementById('foto-bebe-preview');
+                fotoPreview.src = (perfil.foto && perfil.foto.startsWith('data:image')) ? perfil.foto : 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+
+                aplicarConfiguracionVisual(config);
+            }
+            
+            function popularSelectoresTipografia() {
+                const fuentesCont = document.getElementById('fuentes-container');
+                const tamanoSelect = document.getElementById('tamano-fuente');
+                if (!fuentesCont || !tamanoSelect) return;
+                
+                fuentesCont.innerHTML = '';
+                tamanosFuenteDisponibles.forEach(tamano => tamanoSelect.add(new Option(tamano, tamano)));
+                fuentesDisponibles.forEach(fuente => {
+                    const opcion = document.createElement('div');
+                    opcion.className = 'opcion';
+                    opcion.dataset.fuente = fuente.valor;
+                    opcion.innerHTML = `<div class="preview" style="font-family: ${fuente.valor};">Aa</div><span>${fuente.nombre}</span>`;
+                    opcion.addEventListener('click', function() {
+                        document.querySelectorAll('#fuentes-container .opcion').forEach(o => o.classList.remove('selected'));
+                        this.classList.add('selected');
+                    });
+                    fuentesCont.appendChild(opcion);
+                });
+            }
+
+            // --- MANEJO DE EVENTOS ---
+            function configurarEventListenersGenerales() {
+                document.getElementById('btn-logout').addEventListener('click', cerrarSesion);
+                btnGuardarConfigDiario.addEventListener('click', guardarConfiguracionDelDiarioActivo);
+                document.getElementById('btn-crear-nuevo-diario-modal').addEventListener('click', abrirModalCrearDiario);
+                configurarTabsNavegacion();
+            }
+
+            async function guardarConfiguracionDelDiarioActivo() {
+                if (!getActiveDiarioId()) {
+                    mostrarMensajeGlobal('No hay un diario activo.', 'error', globalConfigMessageEl, 3000);
+                    return;
+                }
+                setBotonCargando(btnGuardarConfigDiario, true, 'Guardando...');
+                
+                const configParaGuardar = {
+                    nombre_diario_personalizado: document.getElementById('nombre-diario-personalizado').value,
+                    mensaje_bienvenida: document.getElementById('mensaje-bienvenida').value,
+                    color_primario: document.getElementById('color-primario').value,
+                    color_secundario: document.getElementById('color-secundario').value,
+                    tamano_fuente: document.getElementById('tamano-fuente').value,
+                    fuente_principal: document.querySelector('#fuentes-container .opcion.selected')?.dataset.fuente,
+                    perfil_bebe: {
+                        nombre_completo: document.getElementById('nombre-bebe-completo').value,
+                        fecha_nacimiento: document.getElementById('fecha-nacimiento').value,
+                        foto: configuracionActualDelDiario.perfil_bebe?.foto || ''
+                    }
+                };
+                
+                try {
+                    await fetchAPI('/api/configuracion', 'PUT', configParaGuardar); 
+                    configuracionActualDelDiario = JSON.parse(JSON.stringify(configParaGuardar)); 
+                    aplicarConfiguracionVisual(configParaGuardar);
+                    mostrarMensajeGlobal('¡Configuración guardada!', 'exito', globalConfigMessageEl, 3000);
+                } catch (error) {
+                    mostrarMensajeGlobal('Error al guardar: ' + error.message, 'error', globalConfigMessageEl, 4000);
+                } finally {
+                    setBotonCargando(btnGuardarConfigDiario, false);
+                }
+            }
+            
+            function abrirModalCrearDiario() { 
+                document.getElementById('modal-crear-diario').style.display = 'flex';
+            }
+            function cerrarModalCrearDiario() {
+                document.getElementById('modal-crear-diario').style.display = 'none';
+            }
+            document.getElementById('form-crear-diario').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const nombreBebe = document.getElementById('nombre-bebe-nuevo-diario').value;
+                if(!nombreBebe) return;
+                try {
+                    const nuevoDiario = await fetchAPI('/api/diarios', 'POST', { nombre_principal_bebe: nombreBebe });
+                    setActiveDiarioId(nuevoDiario.id);
+                } catch(error) {
+                    mostrarMensajeGlobal('Error creando diario: '+error.message, 'error', document.getElementById('crear-diario-message'));
+                }
+            });
+            document.getElementById('btn-cancelar-crear-diario').addEventListener('click', cerrarModalCrearDiario);
+
+            function configurarTabsNavegacion() {
+                 const tabs = document.querySelectorAll('.tabs .tab');
+                 const sections = document.querySelectorAll('.config-section');
+                 tabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        if (document.body.classList.contains('sin-diario-activo') && !this.dataset.tab.match(/mis-diarios|seguridad/)) {
+                            mostrarMensajeGlobal('Debes seleccionar o crear un diario primero.', 'info', globalConfigMessageEl, 3000);
+                            return;
+                        }
+                        tabs.forEach(t => t.classList.remove('active'));
+                        sections.forEach(s => s.classList.remove('active'));
+                        this.classList.add('active');
+                        document.getElementById(this.dataset.tab).classList.add('active');
+                    });
+                 });
+                 const hash = window.location.hash.substring(1);
+                 if (hash && document.querySelector(`.tab[data-tab="${hash}"]`)) {
+                    document.querySelector(`.tab[data-tab="${hash}"]`).click();
+                 }
+            }
+
+            window.addEventListener('activeDiarioChanged', () => window.location.reload());
+
+            main();
+        });
+    </script>
+</body>
+</html>

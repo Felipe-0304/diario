@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="es" id="html-theme">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario - Mi Pequeño Tesoro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Comic+Neue:wght@400;700&family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <style>
+        :root {
+            /* Variables consistentes con configuracion.html */
+            --color-primario: #FFB6C1;
+            --color-secundario: #FFD1DC;
+            --color-accento: #FFD700;
+            --color-texto: #5D3B45;
+            --color-texto-claro: #A78B94;
+            --color-fondo: #FFF9FB;
+            --color-tarjetas: #FFFFFF;
+            --color-bordes: #F0D6DE;
+            --color-error: #ff6b6b;
+            --color-exito: #28a745;
+            --fuente-principal: 'Comic Neue', cursive;
+            --tamano-fuente: 16px;
+            
+            /* Colores para tipos de evento */
+            --color-vacuna-bg: #FFE4E1; --color-vacuna-text: #CD5C5C;
+            --color-control-bg: #E6F7E6; --color-control-text: #2E8B57;
+            --color-hito-bg: #F0E6FF;   --color-hito-text: #9370DB;
+            --color-evento-bg: #FFF5E6; --color-evento-text: #FFA500;
+            --color-other-month: #f8f8f8da;
+        }
+
+        body {
+            font-family: var(--fuente-principal);
+            background-color: var(--color-fondo);
+            color: var(--color-texto);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            font-size: var(--tamano-fuente);
+            transition: all 0.3s ease;
+        }
+
+        .visually-hidden {
+            border: 0;
+            clip: rect(0 0 0 0);
+            height: 1px;
+            margin: -1px;
+            overflow: hidden;
+            padding: 0;
+            position: absolute;
+            width: 1px;
+            white-space: nowrap; 
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        h1#titulo-principal-calendario { /* ID para el título principal */
+            font-family: 'Pacifico', cursive;
+            color: var(--color-primario);
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+
+        /* Estilos del calendario */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .mes-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mes-titulo {
+            font-size: 1.8rem;
+            color: var(--color-primario);
+            margin: 0;
+            min-width: 200px;
+            text-align: center;
+            font-family: 'Pacifico', cursive;
+        }
+
+        .calendar-header button {
+            background-color: var(--color-tarjetas);
+            border: 1px solid var(--color-bordes);
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--color-primario);
+            transition: all 0.3s;
+            padding: 8px 15px;
+            border-radius: 10px;
+            font-family: var(--fuente-principal);
+        }
+
+        .calendar-header button:hover {
+            background-color: var(--color-secundario);
+            border-color: var(--color-primario);
+        }
+
+        .btn-primario {
+            background-color: var(--color-primario) !important;
+            color: white !important;
+            font-weight: bold;
+        }
+
+        .btn-primario:hover {
+            background-color: var(--color-secundario) !important;
+            color: var(--color-texto) !important;
+        }
+
+        .calendario-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .dias-semana {
+            text-align: center;
+            font-weight: bold;
+            padding: 12px 5px;
+            background-color: var(--color-primario);
+            color: white;
+            border-radius: 10px;
+        }
+
+        .dia {
+            min-height: 100px;
+            padding: 10px;
+            background-color: var(--color-tarjetas);
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border: 1px solid var(--color-bordes);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dia:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+            border-color: var(--color-primario);
+        }
+
+        .dia.otro-mes {
+            background-color: var(--color-other-month);
+            color: var(--color-texto-claro);
+        }
+
+        .dia.hoy .numero-dia {
+            background-color: var(--color-accento);
+            color: var(--color-texto);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .dia.seleccionado {
+            border: 2px solid var(--color-primario);
+            background-color: var(--color-secundario);
+        }
+
+        .numero-dia {
+            font-weight: bold;
+            margin-bottom: 5px;
+            align-self: flex-start;
+        }
+
+        .eventos-dia-preview {
+            flex-grow: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .evento-preview {
+            background-color: var(--color-secundario);
+            font-size: 0.75rem;
+            padding: 3px 6px;
+            border-radius: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: white;
+        }
+
+        .evento-preview.vacuna { background-color: var(--color-vacuna-text); }
+        .evento-preview.control { background-color: var(--color-control-text); }
+        .evento-preview.hito { background-color: var(--color-hito-text); }
+        .evento-preview.evento { background-color: var(--color-evento-text); }
+
+        /* Sección de eventos del día */
+        .eventos-seccion {
+            background-color: var(--color-tarjetas);
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 30px;
+            border: 1px solid var(--color-bordes);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+        }
+
+        .eventos-seccion h2 {
+            font-family: 'Pacifico', cursive;
+            color: var(--color-primario);
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.8rem;
+        }
+
+        #lista-eventos-dia {
+            min-height: 100px;
+        }
+
+        .evento-item-lista {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 5px solid;
+            background-color: var(--color-fondo);
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .evento-item-lista:hover {
+            transform: translateX(5px);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+        }
+
+        .evento-item-lista.vacuna { border-left-color: var(--color-vacuna-text); }
+        .evento-item-lista.control { border-left-color: var(--color-control-text); }
+        .evento-item-lista.hito { border-left-color: var(--color-hito-text); }
+        .evento-item-lista.evento { border-left-color: var(--color-evento-text); }
+
+        .evento-titulo-lista {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+
+        .evento-descripcion-lista {
+            font-size: 0.9rem;
+            color: var(--color-texto-claro);
+        }
+
+        .acciones button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            margin-left: 10px;
+            color: var(--color-texto-claro);
+            transition: all 0.3s;
+        }
+
+        .acciones button:hover {
+            color: var(--color-primario);
+            transform: scale(1.1);
+        }
+
+        .btn-favorito { /* Ya existe en main.css, pero aquí para asegurar */
+            color: var(--color-texto-claro); /* Color por defecto para no favorito */
+        }
+        .btn-favorito.favorito { /* Clase para cuando es favorito */
+             color: var(--color-accento) !important; /* Color de favorito */
+        }
+
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-contenido {
+            background-color: var(--color-tarjetas);
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            border: 1px solid var(--color-bordes);
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal h2 {
+            font-family: 'Pacifico', cursive;
+            color: var(--color-primario);
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--color-bordes);
+            border-radius: 10px;
+            font-family: var(--fuente-principal);
+            background-color: var(--color-fondo);
+            color: var(--color-texto);
+            transition: all 0.3s;
+            box-sizing: border-box;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--color-primario);
+            box-shadow: 0 0 0 2px var(--color-secundario);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-family: var(--fuente-principal);
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-secundario {
+            background-color: var(--color-texto-claro);
+            color: white;
+        }
+
+        .btn-secundario:hover {
+            background-color: var(--color-texto);
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .checkbox-custom {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--color-bordes);
+            border-radius: 5px;
+            display: inline-block;
+            position: relative;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .checkbox-custom::after {
+            content: '★'; 
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8); 
+            color: white; 
+            font-size: 16px; 
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+        }
+        
+        input[type="checkbox"].visually-hidden:checked + .checkbox-custom {
+            background-color: var(--color-accento);
+            border-color: var(--color-accento);
+        }
+
+        input[type="checkbox"].visually-hidden:checked + .checkbox-custom::after {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1); 
+        }
+
+        input[type="checkbox"].visually-hidden:focus-visible + .checkbox-custom {
+            outline: 2px solid var(--color-primario);
+            outline-offset: 2px;
+            box-shadow: 0 0 5px var(--color-secundario);
+        }
+        
+        .checkbox-label-text {
+            cursor: pointer;
+            user-select: none; 
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid var(--color-bordes);
+            color: var(--color-texto-claro);
+            font-size: 0.9rem;
+        }
+        
+        .diario-activo-calendario-info {
+            text-align: right;
+            margin-bottom: 10px;
+            font-size: 0.85em;
+            color: var(--color-texto-claro);
+        }
+        .diario-activo-calendario-info strong {
+            color: var(--color-texto);
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 id="titulo-principal-calendario">📅 Calendario de Recuerdos</h1>
+            <button id="btn-logout" title="Cerrar sesión" style="position: absolute; top: 20px; right: 20px; background: none; border: none; cursor: pointer; font-size: 1.5rem; color: var(--color-primario);">👋</button>
+            <nav>
+                <ul>
+                    <li><a href="index.html">🏠 Inicio</a></li>
+                    <li><a href="fotos.html">📷 Fotos</a></li>
+                    <li><a href="calendario.html" class="active">📅 Calendario</a></li>
+                    <li><a href="linea-tiempo.html">⏳ Línea de Tiempo</a></li>
+                    <li><a href="configuracion.html">⚙️ Configuración</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <div class="diario-activo-calendario-info" id="diario-activo-calendario-info" style="display:none;">
+            Eventos del diario: <strong id="nombre-diario-actual-calendario">Cargando...</strong>
+        </div>
+
+        <div class="calendar-header">
+            <button id="btn-nuevo-evento" class="btn btn-primario">+ Nuevo Evento</button>
+            <div class="mes-control">
+                <button id="btn-mes-anterior">&lt;</button>
+                <h2 class="mes-titulo" id="mes-actual-titulo">Mayo 2025</h2>
+                <button id="btn-mes-siguiente">&gt;</button>
+            </div>
+        </div>
+        
+        <div id="global-calendar-message" class="mensaje" style="display:none;"></div>
+
+
+        <div class="calendario-grid" id="dias-semana">
+            </div>
+
+        <div class="calendario-grid" id="calendario">
+            </div>
+
+        <div class="eventos-seccion">
+            <h2 id="titulo-eventos-dia">📌 Eventos del Día</h2>
+            <div id="lista-eventos-dia">
+                <p class="mensaje mensaje-vacio">Selecciona un día para ver sus eventos</p>
+            </div>
+        </div>
+
+        <div class="modal" id="modal-evento">
+            <div class="modal-contenido">
+                <h2 id="modal-titulo">Nuevo Evento</h2>
+                <div id="modal-message" class="mensaje" style="display:none;"></div>
+                <form id="form-evento" novalidate>
+                    <input type="hidden" id="evento-id">
+                    <input type="hidden" id="nuevo-evento-diario-id" name="diarioId"> <!-- Para el ID del diario activo -->
+                    <div class="form-group">
+                        <label for="evento-fecha">Fecha:</label>
+                        <input type="date" id="evento-fecha" name="fecha" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="evento-titulo">Título:</label>
+                        <input type="text" id="evento-titulo" name="titulo" class="form-control" placeholder="Ej: Primera sonrisa" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="evento-descripcion">Descripción:</label>
+                        <textarea id="evento-descripcion" name="descripcion" class="form-control" rows="3" placeholder="Detalles del evento..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="evento-tipo">Tipo de evento:</label>
+                        <select id="evento-tipo" name="tipo" class="form-control" required>
+                            <option value="evento">Evento Especial</option>
+                            <option value="vacuna">Vacuna</option>
+                            <option value="control">Control Médico</option>
+                            <option value="hito">Hito de Desarrollo</option>
+                        </select>
+                    </div>
+                    <div class="form-group checkbox-container">
+                        <input type="checkbox" id="evento-favorito" name="favorito" class="visually-hidden">
+                        <label for="evento-favorito" class="checkbox-custom" aria-hidden="true"></label>
+                        <label for="evento-favorito" class="checkbox-label-text">Marcar como favorito</label>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secundario" id="btn-cancelar-modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primario" id="btn-guardar-evento">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; <span id="current-year">2025</span> Con todo el amor del mundo - Diario de Mi Bebé © </p>
+        </footer>
+    </div>
+
+    <script src="/js/theme-manager.js" defer></script>
+    <script src="/js/utils.js" defer></script>
+    
+    <script>
+        // getActiveDiarioId, setActiveDiarioId, fetchAPI, cerrarSesion, mostrarMensajeGlobal, etc. vienen de utils.js
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            // --- ESTADO GLOBAL DEL SCRIPT ---
+            const nombreMeses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            let eventosGlobal = []; // Eventos del diario activo
+            let fechaVistaActual = new Date();
+            let diaSeleccionado = null; // Guarda la fecha como string YYYY-MM-DD
+            let currentActiveDiarioId = null;
+
+            // --- ELEMENTOS DEL DOM ---
+            const diasCalendarioGrid = document.getElementById('calendario');
+            const mesActualTituloEl = document.getElementById('mes-actual-titulo');
+            const listaEventosDiaEl = document.getElementById('lista-eventos-dia');
+            const tituloEventosDiaEl = document.getElementById('titulo-eventos-dia');
+            const globalCalendarMessageEl = document.getElementById('global-calendar-message');
+            const tituloPrincipalCalendarioEl = document.getElementById('titulo-principal-calendario');
+            const diarioActivoInfoEl = document.getElementById('diario-activo-calendario-info');
+            const nombreDiarioActualEl = document.getElementById('nombre-diario-actual-calendario');
+            
+            const modalEvento = document.getElementById('modal-evento');
+            const modalTituloEl = document.getElementById('modal-titulo');
+            const modalMessageEl = document.getElementById('modal-message');
+            const formEvento = document.getElementById('form-evento');
+            const eventoIdInput = document.getElementById('evento-id');
+            const nuevoEventoDiarioIdInput = document.getElementById('nuevo-evento-diario-id'); // Para el ID del diario al crear
+            const eventoFechaInput = document.getElementById('evento-fecha');
+            const eventoTituloInput = document.getElementById('evento-titulo');
+            const eventoDescripcionInput = document.getElementById('evento-descripcion');
+            const eventoTipoInput = document.getElementById('evento-tipo');
+            const eventoFavoritoInput = document.getElementById('evento-favorito');
+            const btnLogout = document.getElementById('btn-logout');
+            const btnNuevoEventoEl = document.getElementById('btn-nuevo-evento');
+
+
+            // --- INICIALIZACIÓN ---
+            async function inicializarPaginaCalendario() {
+                currentActiveDiarioId = getActiveDiarioId();
+
+                if (!currentActiveDiarioId) {
+                    mostrarMensajeGlobal('No hay un diario activo. Por favor, ve a Inicio.', 'error', globalCalendarMessageEl);
+                    if(btnNuevoEventoEl) btnNuevoEventoEl.disabled = true;
+                    if(diasCalendarioGrid) diasCalendarioGrid.innerHTML = '<p class="mensaje mensaje-vacio">Selecciona un diario para ver su calendario.</p>';
+                    if(listaEventosDiaEl) listaEventosDiaEl.innerHTML = '<p class="mensaje mensaje-vacio">Selecciona un diario.</p>';
+                    if(diarioActivoInfoEl) diarioActivoInfoEl.style.display = 'none';
+                    return;
+                }
+
+                if(btnNuevoEventoEl) btnNuevoEventoEl.disabled = false;
+                if(nuevoEventoDiarioIdInput) nuevoEventoDiarioIdInput.value = currentActiveDiarioId;
+
+                // Mostrar info del diario activo y actualizar título principal
+                if (diarioActivoInfoEl && nombreDiarioActualEl && tituloPrincipalCalendarioEl) {
+                    try {
+                        const configDiario = await fetchAPI('/api/configuracion'); // Asume que devuelve config del diario activo
+                        if (configDiario) {
+                            const nombreDiario = configDiario.nombre_diario_personalizado || `Diario ID: ${currentActiveDiarioId}`;
+                            nombreDiarioActualEl.textContent = nombreDiario;
+                            tituloPrincipalCalendarioEl.textContent = `📅 Calendario de ${nombreDiario}`;
+                            document.title = `Calendario - ${nombreDiario}`;
+                        }
+                        diarioActivoInfoEl.style.display = 'block';
+                    } catch (error) {
+                        console.warn("No se pudo cargar el nombre del diario activo:", error.message);
+                        nombreDiarioActualEl.textContent = `Diario ID: ${currentActiveDiarioId}`;
+                        tituloPrincipalCalendarioEl.textContent = `📅 Calendario del Diario ID: ${currentActiveDiarioId}`;
+                        diarioActivoInfoEl.style.display = 'block';
+                    }
+                }
+                
+                renderizarDiasSemana();
+                await cargarEventosDelDiarioAPI(); 
+                setupEventListeners();
+            }
+
+
+            function renderizarDiasSemana() {
+                const contenedorNombresDias = document.getElementById('dias-semana');
+                if (!contenedorNombresDias) {
+                    console.error("Elemento 'dias-semana' no encontrado.");
+                    return;
+                }
+                contenedorNombresDias.innerHTML = '';
+                const nombresDiasUI = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']; 
+                nombresDiasUI.forEach(dia => {
+                    const diaEl = document.createElement('div');
+                    diaEl.className = 'dias-semana';
+                    diaEl.textContent = dia;
+                    contenedorNombresDias.appendChild(diaEl);
+                });
+            }
+
+            async function cargarEventosDelDiarioAPI() {
+                if (!currentActiveDiarioId) {
+                    mostrarMensajeEnListaEventos('No hay un diario activo seleccionado.', 'error');
+                    return;
+                }
+                mostrarMensajeEnListaEventos('Cargando eventos del calendario...', 'carga');
+                try {
+                    // Usar el endpoint que filtra por diarioId
+                    const eventos = await fetchAPI(`/api/eventos/diario/${currentActiveDiarioId}`);
+                    if (!Array.isArray(eventos)) {
+                        console.error('[Calendario] Se esperaba un array de eventos, pero se recibió:', eventos);
+                        mostrarMensajeEnListaEventos(`Error: formato de datos de eventos inesperado.`, 'error');
+                        eventosGlobal = [];
+                    } else {
+                        // Filtrar para que solo eventos no multimedia se muestren prominentemente en el calendario
+                        // Los eventos de tipo 'foto' y 'video' se manejan en fotos.html
+                        eventosGlobal = eventos.filter(e => e.tipo !== 'foto' && e.tipo !== 'video')
+                                            .map(e => ({...e, favorito: Boolean(e.favorito)}));
+                    }
+
+                    renderizarCalendario();
+                    if (diaSeleccionado) { 
+                        const fechaObjDiaSel = new Date(diaSeleccionado + 'T00:00:00');
+                        mostrarEventosDia(fechaObjDiaSel);
+                    } else {
+                        mostrarMensajeEnListaEventos('Selecciona un día para ver sus eventos o crea uno nuevo.', 'vacio');
+                    }
+                } catch (error) {
+                    console.error('[Calendario] Error al cargar eventos desde API:', error);
+                    if (error.message !== 'No autorizado') { 
+                        mostrarMensajeEnListaEventos(`Error al cargar eventos: ${error.message}. Intenta recargar.`, 'error', globalCalendarMessageEl);
+                    }
+                }
+            }
+
+            function renderizarCalendario() {
+                if (!diasCalendarioGrid || !mesActualTituloEl) {
+                    console.error("Elementos del DOM para el calendario no encontrados.");
+                    return;
+                }
+                
+                diasCalendarioGrid.innerHTML = '';
+                const anio = fechaVistaActual.getFullYear();
+                const mesActual = fechaVistaActual.getMonth();
+
+                mesActualTituloEl.textContent = `${nombreMeses[mesActual]} ${anio}`;
+
+                const primerDiaMesDate = new Date(anio, mesActual, 1);
+                let primerDiaSemanaMes = primerDiaMesDate.getDay(); 
+                if (primerDiaSemanaMes === 0) primerDiaSemanaMes = 7; 
+                const diasMesAnteriorOffset = primerDiaSemanaMes - 1; 
+
+                const hoy = new Date();
+                hoy.setHours(0, 0, 0, 0);
+
+                const ultimoDiaMesAnteriorDate = new Date(anio, mesActual, 0);
+                const ultimoDiaNumMesAnterior = ultimoDiaMesAnteriorDate.getDate();
+
+                for (let i = diasMesAnteriorOffset; i > 0; i--) {
+                    const dia = ultimoDiaNumMesAnterior - i + 1;
+                    const fechaDiaAnterior = new Date(ultimoDiaMesAnteriorDate.getFullYear(), ultimoDiaMesAnteriorDate.getMonth(), dia);
+                    diasCalendarioGrid.appendChild(crearDiaCalendario(dia, true, false, false, fechaDiaAnterior));
+                }
+
+                const ultimoDiaMesDate = new Date(anio, mesActual + 1, 0);
+                for (let dia = 1; dia <= ultimoDiaMesDate.getDate(); dia++) {
+                    const fechaDia = new Date(anio, mesActual, dia);
+                    const esHoy = fechaDia.getTime() === hoy.getTime();
+                    const esSeleccionado = diaSeleccionado && (fechaDia.toISOString().split('T')[0] === diaSeleccionado);
+                    diasCalendarioGrid.appendChild(crearDiaCalendario(dia, false, esHoy, esSeleccionado, fechaDia));
+                }
+
+                const celdasActuales = diasMesAnteriorOffset + ultimoDiaMesDate.getDate();
+                const celdasRestantes = (celdasActuales % 7 === 0) ? 0 : (7 - (celdasActuales % 7));
+                const primerDiaMesSiguienteDate = new Date(anio, mesActual + 1, 1);
+
+                for (let i = 1; i <= celdasRestantes; i++) {
+                    const fechaDiaSiguiente = new Date(primerDiaMesSiguienteDate.getFullYear(), primerDiaMesSiguienteDate.getMonth(), i);
+                    diasCalendarioGrid.appendChild(crearDiaCalendario(i, true, false, false, fechaDiaSiguiente));
+                }
+            }
+
+            function crearDiaCalendario(diaNum, esOtroMes, esHoy = false, esSeleccionado = false, fechaCompleta = null) {
+                const diaEl = document.createElement('div');
+                diaEl.className = 'dia';
+                if (esOtroMes) diaEl.classList.add('otro-mes');
+                if (esHoy) diaEl.classList.add('hoy');
+                if (esSeleccionado) diaEl.classList.add('seleccionado');
+
+                diaEl.innerHTML = `<div class="numero-dia">${diaNum}</div><div class="eventos-dia-preview"></div>`;
+
+                if (fechaCompleta) { 
+                    diaEl.dataset.fecha = fechaCompleta.toISOString().split('T')[0];
+                    diaEl.addEventListener('click', () => seleccionarDia(fechaCompleta, esOtroMes));
+                    
+                    if (!esOtroMes) { 
+                        const fechaStr = fechaCompleta.toISOString().split('T')[0];
+                        const eventosDia = eventosGlobal.filter(e => e.fecha === fechaStr && e.tipo !== 'foto' && e.tipo !== 'video'); // Excluir multimedia de previews
+                        const previewContainer = diaEl.querySelector('.eventos-dia-preview');
+                        
+                        eventosDia.slice(0, 2).forEach(evento => { 
+                            const eventoPreviewEl = document.createElement('div');
+                            eventoPreviewEl.className = `evento-preview ${evento.tipo || 'evento'}`;
+                            eventoPreviewEl.textContent = evento.favorito ? `★ ${evento.titulo}` : evento.titulo;
+                            if (eventoPreviewEl.textContent.length > 12) { 
+                               eventoPreviewEl.textContent = eventoPreviewEl.textContent.substring(0, 10) + "...";
+                            }
+                            previewContainer.appendChild(eventoPreviewEl);
+                        });
+                        
+                        if (eventosDia.length > 2) {
+                            const masEventosEl = document.createElement('div');
+                            masEventosEl.textContent = `+${eventosDia.length - 2} más`;
+                            masEventosEl.style.fontSize = '0.65rem'; 
+                            masEventosEl.style.textAlign = 'center';
+                            previewContainer.appendChild(masEventosEl);
+                        }
+                    }
+                }
+                return diaEl;
+            }
+
+            function seleccionarDia(fechaObj, esOtroMesDelCalendario) {
+                 if (esOtroMesDelCalendario) {
+                    fechaVistaActual = new Date(fechaObj.getFullYear(), fechaObj.getMonth(), 1);
+                    diaSeleccionado = fechaObj.toISOString().split('T')[0]; 
+                    renderizarCalendario(); 
+                    mostrarEventosDia(fechaObj); 
+                } else {
+                    diaSeleccionado = fechaObj.toISOString().split('T')[0];
+                    renderizarCalendario(); 
+                    mostrarEventosDia(fechaObj);
+                }
+            }
+
+            function mostrarEventosDia(fechaObj) {
+                if (!listaEventosDiaEl || !tituloEventosDiaEl) return;
+                const fechaStr = fechaObj.toISOString().split('T')[0];
+                const opcionesFecha = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                tituloEventosDiaEl.textContent = `Eventos del ${fechaObj.toLocaleDateString('es-ES', opcionesFecha)}`;
+                
+                const eventosDia = eventosGlobal.filter(e => e.fecha === fechaStr && e.tipo !== 'foto' && e.tipo !== 'video'); // Excluir multimedia
+                listaEventosDiaEl.innerHTML = '';
+                
+                if (eventosDia.length === 0) {
+                    mostrarMensajeEnListaEventos('No hay eventos (no multimedia) para este día.', 'vacio');
+                    return;
+                }
+                
+                eventosDia.forEach(evento => {
+                    const eventoItem = document.createElement('div');
+                    eventoItem.className = `evento-item-lista ${evento.tipo || 'evento'}`;
+                    eventoItem.innerHTML = `
+                        <div class="info">
+                            <div class="evento-titulo-lista">${evento.favorito ? '★ ' : ''}${evento.titulo}</div>
+                            ${evento.descripcion ? `<div class="evento-descripcion-lista">${evento.descripcion}</div>` : ''}
+                        </div>
+                        <div class="acciones">
+                            <button class="btn-toggle-favorito ${evento.favorito ? 'favorito' : ''}" data-id="${evento.id}" title="${evento.favorito ? 'Quitar favorito' : 'Marcar favorito'}">
+                                ${evento.favorito ? '★' : '☆'}
+                            </button>
+                            <button class="btn-editar" data-id="${evento.id}" title="Editar">✏️</button>
+                            <button class="btn-eliminar" data-id="${evento.id}" title="Eliminar">🗑️</button>
+                        </div>
+                    `;
+                    listaEventosDiaEl.appendChild(eventoItem);
+                });
+            }
+
+            function mostrarMensajeEnListaEventos(texto, tipo) {
+                if (!listaEventosDiaEl) return;
+                listaEventosDiaEl.innerHTML = ''; 
+                const mensajeEl = document.createElement('p'); 
+                
+                if (tipo === 'carga') mensajeEl.className = 'mensaje mensaje-carga';
+                else if (tipo === 'error') mensajeEl.className = 'mensaje mensaje-error';
+                else mensajeEl.className = 'mensaje mensaje-vacio'; 
+                
+                mensajeEl.textContent = texto;
+                listaEventosDiaEl.appendChild(mensajeEl);
+            }
+            
+            function mostrarMesAnterior() {
+                fechaVistaActual.setMonth(fechaVistaActual.getMonth() - 1);
+                renderizarCalendario();
+            }
+
+            function mostrarMesSiguiente() {
+                fechaVistaActual.setMonth(fechaVistaActual.getMonth() + 1);
+                renderizarCalendario();
+            }
+
+            function abrirModalNuevoEvento() {
+                if (!currentActiveDiarioId) {
+                    mostrarMensajeGlobal('Debes tener un diario activo para añadir eventos.', 'error', globalCalendarMessageEl, 3000);
+                    return;
+                }
+                if (!modalTituloEl || !formEvento || !eventoIdInput || !eventoFavoritoInput || !eventoFechaInput || !modalMessageEl || !modalEvento || !eventoTituloInput || !nuevoEventoDiarioIdInput) return;
+
+                modalTituloEl.textContent = 'Nuevo Evento';
+                formEvento.reset();
+                eventoIdInput.value = '';
+                nuevoEventoDiarioIdInput.value = currentActiveDiarioId; // Setear el ID del diario activo
+                eventoFavoritoInput.checked = false; 
+
+                if (diaSeleccionado) { 
+                    eventoFechaInput.value = diaSeleccionado;
+                } else { 
+                    eventoFechaInput.value = new Date().toISOString().split('T')[0];
+                }
+                
+                modalMessageEl.style.display = 'none'; 
+                modalEvento.style.display = 'flex';
+                eventoTituloInput.focus(); 
+            }
+
+            function abrirModalEditarEvento(evento) {
+                 if (!modalTituloEl || !formEvento || !eventoIdInput || !eventoFavoritoInput || !eventoFechaInput || !modalMessageEl || !modalEvento || !eventoTituloInput || !eventoDescripcionInput || !eventoTipoInput || !nuevoEventoDiarioIdInput) return;
+
+                modalTituloEl.textContent = 'Editar Evento';
+                eventoIdInput.value = evento.id;
+                // El diarioId no se edita, pero lo guardamos por si acaso (aunque no hay campo visible)
+                nuevoEventoDiarioIdInput.value = evento.diario_id || currentActiveDiarioId; 
+                eventoFechaInput.value = evento.fecha;
+                eventoTituloInput.value = evento.titulo;
+                eventoDescripcionInput.value = evento.descripcion || '';
+                eventoTipoInput.value = evento.tipo || 'evento';
+                eventoFavoritoInput.checked = Boolean(evento.favorito);
+                
+                modalMessageEl.style.display = 'none';
+                modalEvento.style.display = 'flex';
+                eventoTituloInput.focus();
+            }
+
+            function cerrarModal() {
+                if(modalEvento) modalEvento.style.display = 'none';
+                if(formEvento) formEvento.reset(); 
+            }
+
+            async function manejarSubmitEvento(e) {
+                e.preventDefault();
+                if (!formEvento || !globalCalendarMessageEl || !modalMessageEl || !currentActiveDiarioId) return;
+                
+                mostrarMensajeGlobal('', 'info', modalMessageEl); 
+
+                if (!formEvento.checkValidity()) {
+                    mostrarMensajeGlobal('Por favor, completa los campos requeridos (Fecha, Título, Tipo).', 'error', modalMessageEl);
+                    formEvento.reportValidity(); 
+                    return;
+                }
+                
+                // Crear FormData para enviar, ya que el backend espera 'diarioId' en el cuerpo para POST
+                const formData = new FormData(formEvento); 
+                // El input oculto 'nuevo-evento-diario-id' con name="diarioId" ya está en el form
+                // y su valor se setea en abrirModalNuevoEvento o abrirModalEditarEvento.
+
+                const id = eventoIdInput.value;
+                const esNuevo = !id;
+
+                // Para PUT, el backend toma el diarioId del evento existente, no del form.
+                // Pero para POST, necesitamos asegurarnos que diarioId esté en el FormData.
+                // El input oculto 'nuevo-evento-diario-id' se encarga de esto.
+
+                try {
+                    mostrarMensajeGlobal(esNuevo ? 'Guardando evento...' : 'Actualizando evento...', 'carga', modalMessageEl);
+                    
+                    // Crear el objeto de datos para PUT (ya que no es FormData para PUT de solo metadatos)
+                    const eventoDataParaPut = {
+                        fecha: eventoFechaInput.value,
+                        titulo: eventoTituloInput.value,
+                        descripcion: eventoDescripcionInput.value,
+                        tipo: eventoTipoInput.value,
+                        favorito: eventoFavoritoInput.checked
+                        // No incluimos diarioId aquí para PUT, el backend usa el del evento existente.
+                    };
+
+
+                    const eventoGuardadoOActualizado = esNuevo ?
+                        await fetchAPI('/api/eventos', 'POST', formData, true) : // true para FormData
+                        await fetchAPI(`/api/eventos/${id}`, 'PUT', eventoDataParaPut); // No FormData para PUT de metadatos
+
+                    if (eventoGuardadoOActualizado) {
+                        await cargarEventosDelDiarioAPI(); 
+                        cerrarModal();
+                        mostrarMensajeGlobal(`Evento ${esNuevo ? 'creado' : 'actualizado'} correctamente.`, 'exito', globalCalendarMessageEl, 3000);
+
+                        if (diaSeleccionado === (esNuevo ? formData.get('fecha') : eventoDataParaPut.fecha)) {
+                            mostrarEventosDia(new Date(diaSeleccionado + 'T00:00:00'));
+                        }
+                    }
+                } catch (error) {
+                    console.error('[Calendario] Error al guardar evento:', error);
+                    mostrarMensajeGlobal(`Error al guardar: ${error.message}`, 'error', modalMessageEl);
+                }
+            }
+
+            async function toggleFavoritoEvento(id, esFavoritoActual, botonFavoritoEl) {
+                 if (!id || isNaN(Number(id)) || !globalCalendarMessageEl) {
+                     mostrarMensajeGlobal('ID de evento inválido', 'error', globalCalendarMessageEl);
+                     return;
+                 }
+                 const eventoPuntero = eventosGlobal.find(e => e.id === id);
+                 try {
+                    if (botonFavoritoEl) {
+                         botonFavoritoEl.innerHTML = !esFavoritoActual ? '★' : '☆';
+                         botonFavoritoEl.title = !esFavoritoActual ? 'Quitar favorito' : 'Marcar favorito';
+                         botonFavoritoEl.classList.toggle('favorito', !esFavoritoActual);
+                    }
+                    if(eventoPuntero) eventoPuntero.favorito = !esFavoritoActual;
+
+
+                    const eventoActualizado = await fetchAPI(`/api/eventos/${id}/favorito`, 'PUT', { favorito: !esFavoritoActual });
+                    
+                    const index = eventosGlobal.findIndex(e => e.id === id);
+                    if (index !== -1) {
+                        eventosGlobal[index].favorito = Boolean(eventoActualizado.favorito);
+                    }
+                    
+                    renderizarCalendario(); 
+                    if (diaSeleccionado === eventoActualizado.fecha) { 
+                        mostrarEventosDia(new Date(diaSeleccionado + 'T00:00:00')); 
+                    }
+                    mostrarMensajeGlobal('Favorito actualizado.', 'exito', globalCalendarMessageEl, 2000);
+
+                } catch (error) {
+                    console.error('Error al actualizar favorito:', error);
+                     if (botonFavoritoEl) {
+                         botonFavoritoEl.innerHTML = esFavoritoActual ? '★' : '☆';
+                         botonFavoritoEl.title = esFavoritoActual ? 'Quitar favorito' : 'Marcar favorito';
+                         botonFavoritoEl.classList.toggle('favorito', esFavoritoActual);
+                    }
+                    if(eventoPuntero) eventoPuntero.favorito = esFavoritoActual; 
+                    renderizarCalendario(); 
+                    if (diaSeleccionado && eventoPuntero && diaSeleccionado === eventoPuntero.fecha) { 
+                        mostrarEventosDia(new Date(diaSeleccionado + 'T00:00:00')); 
+                    }
+                    mostrarMensajeGlobal(`Error al actualizar favorito: ${error.message}.`, 'error', globalCalendarMessageEl);
+                }
+            }
+
+            async function manejarEliminarEvento(id) {
+                if (!confirm('¿Estás seguro de que quieres eliminar este evento? Esta acción no se puede deshacer.')) return;
+                if (!globalCalendarMessageEl) return;
+                try {
+                    await fetchAPI(`/api/eventos/${id}`, 'DELETE');
+                    const eventoEliminadoFecha = eventosGlobal.find(e => e.id === id)?.fecha;
+                    eventosGlobal = eventosGlobal.filter(e => e.id !== id);
+                    
+                    renderizarCalendario(); 
+                    
+                    if (eventoEliminadoFecha && diaSeleccionado === eventoEliminadoFecha) {
+                        mostrarEventosDia(new Date(diaSeleccionado + 'T00:00:00')); 
+                    } else if (diaSeleccionado && eventosGlobal.filter(e => e.fecha === diaSeleccionado).length === 0) {
+                         mostrarMensajeEnListaEventos('No hay eventos para este día.', 'vacio');
+                    }
+                    mostrarMensajeGlobal('Evento eliminado correctamente.', 'exito', globalCalendarMessageEl, 3000);
+
+                } catch (error) {
+                    console.error('Error al eliminar evento:', error);
+                    mostrarMensajeGlobal(`Error al eliminar el evento: ${error.message}.`, 'error', globalCalendarMessageEl);
+                }
+            }
+            
+            function setupEventListeners() {
+                document.getElementById('btn-mes-anterior')?.addEventListener('click', mostrarMesAnterior);
+                document.getElementById('btn-mes-siguiente')?.addEventListener('click', mostrarMesSiguiente);
+                btnNuevoEventoEl?.addEventListener('click', abrirModalNuevoEvento);
+                document.getElementById('btn-cancelar-modal')?.addEventListener('click', cerrarModal);
+                
+                formEvento?.addEventListener('submit', manejarSubmitEvento);
+                
+                listaEventosDiaEl?.addEventListener('click', (e) => {
+                    const targetButton = e.target.closest('button');
+                    if (!targetButton) return;
+
+                    const eventoId = parseInt(targetButton.dataset.id);
+                    if (isNaN(eventoId)) return;
+
+                    const evento = eventosGlobal.find(ev => ev.id === eventoId);
+
+                    if (targetButton.classList.contains('btn-editar')) {
+                        if (evento) abrirModalEditarEvento(evento);
+                    } else if (targetButton.classList.contains('btn-eliminar')) {
+                        manejarEliminarEvento(eventoId);
+                    } else if (targetButton.classList.contains('btn-toggle-favorito')) {
+                        if (evento) toggleFavoritoEvento(eventoId, evento.favorito, targetButton);
+                    }
+                });
+                
+                modalEvento?.addEventListener('click', (e) => {
+                    if (e.target === modalEvento) {
+                        cerrarModal();
+                    }
+                });
+
+                btnLogout?.addEventListener('click', cerrarSesion);
+
+                window.addEventListener('activeDiarioChanged', async (event) => {
+                    console.log('Calendario.html: Diario activo cambiado a:', event.detail.diarioId);
+                    mostrarMensajeGlobal('Cargando calendario del nuevo diario...', 'carga', globalCalendarMessageEl);
+                    await inicializarPaginaCalendario(); // Recargar todo con el nuevo contexto del diario
+                    mostrarMensajeGlobal('', '', globalCalendarMessageEl);
+                });
+            }
+
+            // --- Arranque de la página ---
+            await inicializarPaginaCalendario();
+
+        });
+    </script>
+</body>
+</html>
