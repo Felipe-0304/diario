@@ -396,4 +396,54 @@ footer {
   align-items: center;
   justify-content: center;
   z-index: 1000;
+
+}
+/* --- MENSAJES FLOTANTES --- */
+.mensaje-flotante {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 15px 25px;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 500;
+    z-index: 10000;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    opacity: 1;
+    transition: opacity 0.5s ease-out, top 0.5s ease-out;
+    text-align: center;
+}
+
+.mensaje-flotante.success {
+    background-color: #2ecc71; /* Verde */
+}
+
+.mensaje-flotante.error {
+    background-color: #e74c3c; /* Rojo */
+    white-space: pre-wrap; /* Para mostrar saltos de línea en errores de validación */
+}
+
+/* --- SPINNER DE CARGA GLOBAL --- */
+#global-spinner {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 50px;
+    height: 50px;
+    margin-top: -25px;
+    margin-left: -25px;
+    border: 5px solid rgba(255, 255, 255, 0.2);
+    border-top-color: var(--color-primario, #ffadc5);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 10001;
+    display: none; /* Se muestra con JS */
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
