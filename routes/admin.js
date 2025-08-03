@@ -1,102 +1,85 @@
-// routes/admin.js
-import express from 'express';
-import { body, validationResult, param } from 'express-validator';
-import { getQuery, allQuery, runQuery } from '../db/index.js';
-import { requireAdmin, requireAuth } from '../middleware/auth.js';
-
+const express = require('express');
 const router = express.Router();
+const db = require('../db');
+const { requireAdmin } = require('../middleware/auth');
+const csrf = require('csurf');
+const { body, validationResult } = require('express-validator');
 
-/**
- * @api {get} /admin/site-settings Obtener la configuración global del sitio
- */
-export async function getGlobalConfig() {
-    return await getQuery('SELECT * FROM site_config WHERE id = 1');
-}
+const csrfProtection = csrf({ cookie: true });
 
-/**
- * @api {get} /admin/stats Obtener estadísticas del panel de administración
- */
-router.get('/admin/stats', requireAuth, requireAdmin, async (req, res) => {
+// Todas las rutas en este archivo requieren ser admin
+router.use(requireAdmin);
+
+// Obtener métricas del sistema
+router.get('/metrics', async (req, res) => {
     try {
-        const stats = {
-            totalUsuarios: (await getQuery('SELECT COUNT(*) AS count FROM usuarios')).count,
-            totalDiarios: (await getQuery('SELECT COUNT(*) AS count FROM diarios')).count,
-            totalEventos: (await getQuery('SELECT COUNT(*) AS count FROM eventos')).count
-        };
-        res.status(200).json(stats);
+        const totalUsers = await db.getQuery('SELECT COUNT(*) as count FROM usuarios');
+        const totalDiaries = await db.getQuery('SELECT COUNT(*) as count FROM diarios');
+        const totalEvents = await db.getQuery('SELECT COUNT(*) as count FROM eventos');
+        res.json({
+            totalUsers: totalUsers.count,
+            totalDiaries: totalDiaries.count,
+            totalEvents: totalEvents.count
+        });
     } catch (error) {
-        console.error('Error al obtener estadísticas de admin:', error);
-        res.status(500).json({ error: 'Error interno del servidor.' });
+        res.status(500).json({ error: 'Error al obtener las métricas.' });
     }
 });
 
-/**
- * @api {put} /admin/site-settings Actualizar la configuración global del sitio
- */
-router.put('/admin/site-settings',
-    requireAuth,
-    requireAdmin,
-    [
-        body('siteGlobalName').trim().isLength({ min: 1, max: 255 }).withMessage('El nombre global del sitio es obligatorio y no puede exceder 255 caracteres.'),
-        body('allowNewRegistrations').isBoolean().withMessage('El valor de permitir registros debe ser booleano.')
-    ],
-    async (req, res) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-
-        const { siteGlobalName, allowNewRegistrations } = req.body;
-        try {
-            await runQuery('UPDATE site_config SET site_global_name = ?, allow_new_registrations = ? WHERE id = 1', [siteGlobalName, allowNewRegistrations]);
-            res.status(200).json({ message: 'Configuración del sitio actualizada.' });
-        } catch (error) {
-            console.error('Error al actualizar la configuración del sitio:', error);
-            res.status(500).json({ error: 'Error interno del servidor.' });
-        }
-    }
-);
-
-/**
- * @api {get} /admin/usuarios Obtener lista de usuarios
- */
-router.get('/admin/usuarios', requireAuth, requireAdmin, async (req, res) => {
+// Obtener configuración global
+router.get('/config', async (req, res) => {
     try {
-        const usuarios = await allQuery('SELECT id, nombre, email, rol FROM usuarios');
-        res.status(200).json(usuarios);
+        const config = await db.getQuery('SELECT * FROM site_config WHERE id = 1');
+        res.json(config);
     } catch (error) {
-        console.error('Error al obtener la lista de usuarios:', error);
-        res.status(500).json({ error: 'Error interno del servidor.' });
+        res.status(500).json({ error: 'Error al obtener la configuración.' });
     }
 });
 
-/**
- * @api {delete} /admin/usuarios/:id Eliminar un usuario
- */
-router.delete('/admin/usuarios/:id', requireAuth, requireAdmin,
-    param('id').isInt({ gt: 0 }).withMessage('ID de usuario inválido.'),
-    async (req, res) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-        
-        const { id } = req.params;
-        const usuarioIdEnSesion = req.session.user.id; // ID del usuario que hace la petición
-        
-        // **Validación de seguridad agregada**
-        if (parseInt(id, 10) === usuarioIdEnSesion) {
-            return res.status(403).json({ error: 'No puedes eliminar tu propia cuenta de administrador.' });
-        }
-
-        try {
-            await runQuery('DELETE FROM usuarios WHERE id = ?', [id]);
-            res.status(200).json({ message: 'Usuario eliminado exitosamente.' });
-        } catch (error) {
-            console.error('Error al eliminar usuario:', error);
-            res.status(500).json({ error: 'Error interno del servidor.' });
-        }
+// Modificar configuración global
+router.put('/config', csrfProtection, [
+    body('site_global_name').trim().notEmpty().withMessage('El nombre del sitio es requerido.').isLength({ max: 50 }).escape(),
+    body('allow_new_registrations').isBoolean().withMessage('El valor para permitir registros debe ser un booleano.')
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
     }
-);
 
-export default router;
+    try {
+        const { site_global_name, allow_new_registrations } = req.body;
+        await db.runQuery('UPDATE site_config SET site_global_name = ?, allow_new_registrations = ? WHERE id = 1', [site_global_name, allow_new_registrations]);
+        res.json({ message: 'Configuración actualizada correctamente.' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al actualizar la configuración.' });
+    }
+});
+
+// Listar usuarios
+router.get('/users', async (req, res) => {
+    try {
+        const users = await db.getAllQuery('SELECT id, nombre, email, rol FROM usuarios');
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al listar los usuarios.' });
+    }
+});
+
+// Eliminar usuario
+router.delete('/users/:id', csrfProtection, async (req, res) => {
+    const { id } = req.params;
+
+    if (req.session.user.id == id) {
+        return res.status(400).json({ error: 'No puedes eliminar tu propio usuario.' });
+    }
+
+    try {
+        await db.runQuery('DELETE FROM usuarios WHERE id = ?', [id]);
+        // Considerar eliminar datos asociados (diarios, eventos, etc.) o anonimizarlos.
+        res.json({ message: 'Usuario eliminado correctamente.' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al eliminar el usuario.' });
+    }
+});
+
+module.exports = router;
