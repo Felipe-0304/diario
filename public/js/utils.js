@@ -2,279 +2,112 @@
 'use strict';
 
 /**
- * Realiza una petición a la API.
- * @param {string} endpoint - El endpoint de la API.
- * @param {string} [method='GET'] - El método HTTP.
- * @param {object|FormData|null} [body=null] - El cuerpo de la petición.
- * @param {boolean} [isFormData=false] - Indica si el cuerpo es FormData.
- * @returns {Promise<any>} - La respuesta de la API.
- * @throws {Error} Si la respuesta no es OK o hay un error de red.
+ * Muestra un mensaje temporal en la parte superior de la página.
+ * @param {string} message - El mensaje a mostrar.
+ * @param {string} type - 'success' o 'error'.
  */
+function mostrarMensaje(message, type = 'success') {
+    const container = document.createElement('div');
+    container.className = `mensaje-flotante ${type}`;
+    container.textContent = message;
+    document.body.appendChild(container);
 
-export async function fetchAPI(endpoint, method = 'GET', body = null, isFormData = false) {
-    const options = {
-        method: method,
-        headers: {}
-    };
+    setTimeout(() => {
+        container.remove();
+    }, 4000);
+}
 
-    if (body) {
-        if (isFormData) {
-            options.body = body; // Multer maneja el Content-Type automáticamente
-        } else {
-            options.headers['Content-Type'] = 'application/json';
-            options.body = JSON.stringify(body);
+/**
+ * Muestra u oculta el spinner de carga global.
+ * @param {boolean} show - True para mostrar, false para ocultar.
+ */
+function toggleSpinner(show) {
+    let spinner = document.getElementById('global-spinner');
+    if (show) {
+        if (!spinner) {
+            spinner = document.createElement('div');
+            spinner.id = 'global-spinner';
+            document.body.appendChild(spinner);
+        }
+        spinner.style.display = 'block';
+    } else {
+        if (spinner) {
+            spinner.style.display = 'none';
         }
     }
+}
 
+/**
+ * Wrapper centralizado para todas las peticiones fetch a la API.
+ * Automáticamente maneja el token CSRF, el spinner de carga y los errores.
+ * @param {string} url - La URL del endpoint de la API.
+ * @param {object} options - Las opciones de configuración de fetch (method, body, etc.).
+ * @returns {Promise<any>} - La respuesta JSON de la API.
+ */
+async function fetchAPI(url, options = {}) {
+    toggleSpinner(true);
     try {
-        const response = await fetch(endpoint, options);
+        // Para métodos que no son GET y que no son FormData, obtenemos y añadimos el token CSRF.
+        const isModifyingMethod = options.method && options.method.toUpperCase() !== 'GET';
+        const isNotFormData = !(options.body instanceof FormData);
 
-        if (response.status === 401) {
-            console.warn('Usuario no autorizado o sesión expirada. Redirigiendo a login.');
-            if (window.location.pathname !== '/login.html' && !window.location.pathname.endsWith('/login')) {
-                window.location.href = '/login.html';
-            }
-            return null; // O throw new Error('No autorizado');
+        if (isModifyingMethod && isNotFormData) {
+            const tokenResponse = await fetch('/api/csrf-token');
+            if (!tokenResponse.ok) throw new Error('No se pudo obtener el token de seguridad.');
+            const { csrfToken } = await tokenResponse.json();
+
+            options.headers = {
+                ...options.headers,
+                'Content-Type': 'application/json',
+                'CSRF-Token': csrfToken
+            };
         }
+        
+        // Convertimos el body a JSON si no es FormData
+        if (options.body && isNotFormData) {
+            options.body = JSON.stringify(options.body);
+        }
+
+        const response = await fetch(url, options);
 
         if (!response.ok) {
-            const errorText = await response.text();
-            let errorMessage = `Error en API ${method} ${endpoint} (${response.status}): ${response.statusText}`;
-            if (errorText) {
-                try {
-                    const errorJson = JSON.parse(errorText);
-                    errorMessage += ` - ${errorJson.error || errorText}`;
-                } catch (e) {
-                    errorMessage += ` - ${errorText}`;
-                }
+            const errorData = await response.json().catch(() => ({ error: 'Error desconocido en el servidor' }));
+            
+            // Manejo de errores de validación de express-validator
+            if (errorData.errors) {
+                const errorMessages = errorData.errors.map(e => e.msg).join('\n');
+                throw new Error(errorMessages);
             }
-            console.error('Error en API:', errorMessage);
-            throw new Error(response.statusText || 'Error desconocido.');
+            throw new Error(errorData.error || `Error del servidor: ${response.status}`);
         }
 
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.indexOf("application/json") !== -1) {
-            return await response.json();
-        } else {
-            return await response.text();
+        // Si la respuesta no tiene contenido (ej. DELETE exitoso)
+        if (response.status === 204 || response.headers.get('content-length') === '0') {
+            return null;
         }
-        
-    } catch (error) {
-        console.error(`Excepción en fetchAPI (${method} ${endpoint}):`, error);
-        throw error;
-    }
-}
 
-/**
- * Cierra la sesión del usuario y redirige a la página de login.
- */
-export async function cerrarSesion() {
-    try {
-        await fetchAPI('/api/logout');
+        return await response.json();
+
     } catch (error) {
-        console.error('Error al cerrar sesión:', error);
+        mostrarMensaje(error.message, 'error');
+        console.error('Error en fetchAPI:', error);
+        throw error; // Propaga el error para que el código que llama pueda manejarlo si es necesario.
     } finally {
-        window.location.href = 'login.html';
+        toggleSpinner(false);
     }
 }
 
 /**
- * Muestra un mensaje global en la UI.
- * @param {string} mensaje - El mensaje a mostrar.
- * @param {'success'|'error'|'info'|'carga'} tipo - El tipo de mensaje para aplicar estilos.
- * @param {HTMLElement} contenedor - El contenedor donde se mostrará el mensaje.
+ * Formatea una fecha en formato 'DD/MM/YYYY'.
+ * @param {string | Date} dateString - La fecha a formatear.
+ * @returns {string} - La fecha formateada.
  */
-export function mostrarMensajeGlobal(mensaje, tipo, contenedor) {
-    if (!contenedor) return;
-    contenedor.textContent = mensaje;
-    contenedor.className = `alert alert-${tipo}`;
-    if (mensaje) {
-        contenedor.style.display = 'block';
-    } else {
-        contenedor.style.display = 'none';
-    }
+function formatoFecha(dateString) {
+    if (!dateString) return 'Fecha no disponible';
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
 }
 
-/**
- * Establece el título de la página con el nombre del diario.
- * @param {string} nombreDiario - El nombre del diario.
- */
-export function setTituloDiario(nombreDiario) {
-    const tituloBase = 'Diario del Bebé';
-    document.title = nombreDiario ? `${nombreDiario} | ${tituloBase}` : tituloBase;
-}
-
-/**
- * Establece el nombre del diario en la UI.
- * @param {string} nombreDiario - El nombre del diario.
- */
-export function setNombreDiarioUI(nombreDiario) {
-    const nombreDiarioEl = document.getElementById('nombre-diario-actual');
-    if (nombreDiarioEl) {
-        nombreDiarioEl.textContent = nombreDiario || 'Diario no seleccionado';
-    }
-}
-
-/**
- * Actualiza el año en el pie de página.
- */
-function actualizarAnioFooter() {
-    const yearSpan = document.getElementById('current-year');
-    if (yearSpan) {
-        yearSpan.textContent = new Date().getFullYear().toString();
-    }
-}
-
-/**
- * Muestra un mensaje en un elemento específico del DOM.
- * @param {string} texto - El texto del mensaje.
- * @param {'exito'|'error'|'carga'|'info'|'vacio'} tipo - El tipo de mensaje (usado para clases CSS).
- * @param {HTMLElement|string} elementoOId - El elemento HTML o su ID donde mostrar el mensaje.
- * @param {number} [timeout=0] - Tiempo en milisegundos para ocultar el mensaje automáticamente. 0 para no ocultar.
- */
-function mostrarMensajeGlobal(texto, tipo, elementoOId, timeout = 0) {
-    const elemento = typeof elementoOId === 'string' ? document.getElementById(elementoOId) : elementoOId;
-    if (!elemento) {
-        console.warn("Elemento para mostrar mensaje no encontrado:", elementoOId);
-        return;
-    }
-
-    elemento.textContent = texto;
-    elemento.className = `mensaje mensaje-${tipo}`;
-    elemento.style.display = texto ? 'block' : 'none';
-
-    if (timeout > 0) {
-        setTimeout(() => {
-            if (elemento.textContent === texto) { 
-                elemento.style.display = 'none';
-                elemento.textContent = '';
-                elemento.className = 'mensaje'; 
-            }
-        }, timeout);
-    }
-}
-
-/**
- * Obtiene el ID del diario activo actualmente.
- * @returns {number|null} El ID del diario activo o null si no está definido.
- */
-function getActiveDiarioId() {
-    const storedId = sessionStorage.getItem('activeDiarioId');
-    return storedId ? parseInt(storedId, 10) : null;
-}
-
-/**
- * Establece el ID del diario activo.
- * @param {number|null} diarioId - El ID del diario a establecer como activo.
- */
-function setActiveDiarioId(diarioId) {
-    const currentId = getActiveDiarioId();
-    if (currentId !== diarioId) {
-        if (diarioId) {
-            sessionStorage.setItem('activeDiarioId', diarioId.toString());
-        } else {
-            sessionStorage.removeItem('activeDiarioId');
-        }
-        window.dispatchEvent(new CustomEvent('activeDiarioChanged', { detail: { diarioId } }));
-    }
-}
-
-
-/**
- * Añade o quita el estado de carga a un botón, mostrando un spinner.
- * @param {HTMLButtonElement} boton - El elemento del botón a modificar.
- * @param {boolean} cargando - `true` para activar el estado de carga, `false` para desactivarlo.
- * @param {string} [textoCarga='Guardando...'] - El texto a mostrar durante la carga.
- */
-function setBotonCargando(boton, cargando, textoCarga = 'Guardando...') {
-    if (!boton) return;
-
-    if (cargando) {
-        boton.disabled = true;
-        if (!boton.dataset.originalText) {
-            boton.dataset.originalText = boton.innerHTML;
-        }
-        boton.innerHTML = `
-            <span class="spinner"></span>
-            <span>${textoCarga}</span>
-        `;
-    } else {
-        boton.disabled = false;
-        if (boton.dataset.originalText) {
-            boton.innerHTML = boton.dataset.originalText;
-            // Limpiar el dataset para la próxima vez
-            delete boton.dataset.originalText;
-        }
-    }
-}
-
-/**
- * Encapsula la lógica de inicialización para páginas que dependen de un diario activo.
- * Encuentra los elementos comunes de la UI, carga el diario y la configuración,
- * y ejecuta un callback con la configuración cargada.
- * @param {function(object): void} callbackConConfig - Función que se ejecuta si se carga un diario, recibe el objeto de configuración.
- */
-async function inicializarPaginaConDiario(callbackConConfig) {
-    const elementosComunes = {
-        globalMessageEl: document.querySelector('#global-index-message, #global-config-message, #global-gallery-message, #global-calendar-message, #global-timeline-message'),
-        diarioActivoInfoEl: document.querySelector('.diario-activo-info, .diario-activo-fotos-info, .diario-activo-timeline-info, .diario-activo-config-info'),
-        nombreDiarioActualEl: document.querySelector('#nombre-diario-actual-fotos, #nombre-diario-actual-timeline, #nombre-diario-actual-config, #nombre-diario-activo'),
-        tituloPrincipalEl: document.querySelector('#titulo-principal-fotos, #titulo-principal-timeline, #titulo-principal-config, #nombre-app-titulo, #titulo-principal-calendario')
-    };
-
-    let activeDiarioId = getActiveDiarioId();
-    let configDiarioActual;
-
-    try {
-        if (!activeDiarioId) {
-            const diarios = await fetchAPI('/api/diarios');
-            if (diarios && diarios.length > 0) {
-                activeDiarioId = diarios[0].id; // El primer diario es el último accedido
-                setActiveDiarioId(activeDiarioId);
-            } else {
-                if (elementosComunes.globalMessageEl) {
-                    mostrarMensajeGlobal('No tienes diarios. Ve a Configuración para crear uno.', 'info', elementosComunes.globalMessageEl);
-                }
-                document.body.classList.add('sin-diario-activo'); // Clase para deshabilitar UI si es necesario
-                return;
-            }
-        }
-        
-        configDiarioActual = await fetchAPI('/api/configuracion');
-
-        if (!configDiarioActual || configDiarioActual.diario_id !== activeDiarioId) {
-            setActiveDiarioId(null);
-            return inicializarPaginaConDiario(callbackConConfig);
-        }
-
-        if (elementosComunes.diarioActivoInfoEl && elementosComunes.nombreDiarioActualEl) {
-            elementosComunes.nombreDiarioActualEl.textContent = configDiarioActual.nombre_diario_personalizado || `Diario ID: ${activeDiarioId}`;
-            elementosComunes.diarioActivoInfoEl.style.display = 'block';
-        }
-
-        if (elementosComunes.tituloPrincipalEl && configDiarioActual.nombre_diario_personalizado) {
-            const tituloOriginal = elementosComunes.tituloPrincipalEl.textContent;
-            const emoji = tituloOriginal.split(' ')[0];
-            const tituloBase = document.title.split(' - ')[1] || 'Mi Pequeño Tesoro';
-            elementosComunes.tituloPrincipalEl.textContent = `${emoji} ${configDiarioActual.nombre_diario_personalizado}`;
-            document.title = `${configDiarioActual.nombre_diario_personalizado} - ${tituloBase}`;
-        }
-        
-        if (callbackConConfig && typeof callbackConConfig === 'function') {
-            callbackConConfig(configDiarioActual);
-        }
-
-    } catch (error) {
-        if (error.message !== 'No autorizado') {
-            console.error("Error fatal en la inicialización de la página:", error);
-            if (elementosComunes.globalMessageEl) {
-                mostrarMensajeGlobal('Error crítico al cargar los datos del diario. Recarga la página.', 'error', elementosComunes.globalMessageEl);
-            }
-        }
-    }
-}
-
-
-document.addEventListener('DOMContentLoaded', () => {
-    actualizarAnioFooter();
-});
